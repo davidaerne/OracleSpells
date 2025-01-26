@@ -26,7 +26,7 @@
             border-radius: 10px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .filter-section, .spell-list, .selected-spells {
+        .filter-section, .spell-list, .tabs {
             margin-bottom: 20px;
         }
         .filter-section select, .spell-list button {
@@ -35,32 +35,43 @@
             border-radius: 5px;
             border: 1px solid #ccc;
         }
-        .spell-list ul, .selected-spells ul {
+        .spell-list ul {
             list-style: none;
             padding: 0;
         }
-        .spell-list ul li, .selected-spells ul li {
+        .spell-list ul li {
             padding: 10px;
             margin-bottom: 5px;
             background: #f9f9f9;
             border: 1px solid #ddd;
             border-radius: 5px;
         }
-        .selected-spells ul li {
+        .tabs {
             display: flex;
-            justify-content: space-between;
+            border-bottom: 2px solid #ddd;
         }
-        .spell-type {
-            font-style: italic;
-            color: #666;
-        }
-        button.remove {
-            background: #ff4c4c;
-            color: white;
-            border: none;
-            padding: 5px 10px;
+        .tab {
+            padding: 10px 20px;
             cursor: pointer;
-            border-radius: 5px;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            background: #f9f9f9;
+            border-radius: 5px 5px 0 0;
+            margin-right: 10px;
+        }
+        .tab.active {
+            background: #4CAF50;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 0 0 10px 10px;
+        }
+        .tab-content.active {
+            display: block;
         }
     </style>
 </head>
@@ -94,16 +105,21 @@
             <button onclick="filterSpells()">Filter</button>
         </div>
 
-        <div class="spell-list">
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab(event, 'available-spells')">Available Spells</div>
+            <div class="tab" onclick="switchTab(event, 'selected-spells')">Selected Spells</div>
+        </div>
+
+        <div id="available-spells" class="tab-content active">
             <h2>Available Spells</h2>
-            <ul id="available-spells">
+            <ul id="available-spell-list">
                 <!-- Spells will be populated here dynamically -->
             </ul>
         </div>
 
-        <div class="selected-spells">
+        <div id="selected-spells" class="tab-content">
             <h2>Selected Spells</h2>
-            <ul id="selected-spells">
+            <ul id="selected-spell-list">
                 <!-- Selected spells will appear here -->
             </ul>
         </div>
@@ -124,7 +140,7 @@
         }
 
         function displaySpells(filteredSpells) {
-            const availableSpellsEl = document.getElementById('available-spells');
+            const availableSpellsEl = document.getElementById('available-spell-list');
             availableSpellsEl.innerHTML = '';
             filteredSpells.forEach(spell => {
                 const li = document.createElement('li');
@@ -145,14 +161,13 @@
         }
 
         function updateSelectedSpells() {
-            const selectedSpellsEl = document.getElementById('selected-spells');
+            const selectedSpellsEl = document.getElementById('selected-spell-list');
             selectedSpellsEl.innerHTML = '';
             selectedSpells.forEach(spell => {
                 const li = document.createElement('li');
                 li.textContent = `${spell.name} (${spell.type})`;
                 const button = document.createElement('button');
                 button.textContent = 'Remove';
-                button.className = 'remove';
                 button.onclick = () => {
                     selectedSpells.splice(selectedSpells.indexOf(spell), 1);
                     updateSelectedSpells();
@@ -160,6 +175,13 @@
                 li.appendChild(button);
                 selectedSpellsEl.appendChild(li);
             });
+        }
+
+        function switchTab(event, tabId) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tabContent => tabContent.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
         }
 
         // Example: Load spells dynamically (replace with JSON fetch in real implementation)
