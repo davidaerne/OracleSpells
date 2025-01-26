@@ -186,19 +186,29 @@
 
         // Example: Load spells dynamically (replace with JSON fetch in real implementation)
         fetch('https://davidaerne.github.io/OracleSpells/spells.json')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load spells.json');
+                }
+                return response.json();
+            })
             .then(data => {
                 data.forEach(spell => {
-                    if (spell.traditions.includes('Divine') && spell.classes.includes('Oracle')) {
+                    // Ensure spell matches "Divine" tradition and "Oracle" class
+                    if (spell.traditions && spell.traditions.includes('Divine') && spell.classes && spell.classes.includes('Oracle')) {
                         spells.push({
                             name: spell.name,
                             level: spell.level,
-                            type: spell.tags.includes('Offensive') ? 'offensive' : 'defensive'
+                            type: spell.tags ? (spell.tags.includes('Offensive') ? 'offensive' : 'defensive') : 'unknown'
                         });
                     }
                 });
-                filterSpells();
+                filterSpells(); // Trigger the initial display
+            })
+            .catch(error => {
+                console.error('Error loading spells:', error);
             });
+
     </script>
 </body>
 </html>
