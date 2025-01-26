@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle Spell Selector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: #4CAF50;
+            color: white;
+            padding: 1rem 0;
+            text-align: center;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .filter-section, .spell-list, .selected-spells {
+            margin-bottom: 20px;
+        }
+        .filter-section select, .spell-list button {
+            margin: 5px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .spell-list ul, .selected-spells ul {
+            list-style: none;
+            padding: 0;
+        }
+        .spell-list ul li, .selected-spells ul li {
+            padding: 10px;
+            margin-bottom: 5px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .selected-spells ul li {
+            display: flex;
+            justify-content: space-between;
+        }
+        .spell-type {
+            font-style: italic;
+            color: #666;
+        }
+        button.remove {
+            background: #ff4c4c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Oracle Spell Selector</h1>
+    </header>
+    <div class="container">
+        <div class="filter-section">
+            <h2>Filter Spells</h2>
+            <label for="spell-level">Spell Level:</label>
+            <select id="spell-level">
+                <option value="Cantrip">Cantrip</option>
+                <option value="1">Level 1</option>
+                <option value="2">Level 2</option>
+                <option value="3">Level 3</option>
+                <option value="4">Level 4</option>
+                <option value="5">Level 5</option>
+                <option value="6">Level 6</option>
+                <option value="7">Level 7</option>
+                <option value="8">Level 8</option>
+                <option value="9">Level 9</option>
+                <option value="10">Level 10</option>
+            </select>
+            <label for="spell-type">Spell Type:</label>
+            <select id="spell-type">
+                <option value="all">All</option>
+                <option value="offensive">Offensive</option>
+                <option value="defensive">Defensive</option>
+            </select>
+            <button onclick="filterSpells()">Filter</button>
+        </div>
+
+        <div class="spell-list">
+            <h2>Available Spells</h2>
+            <ul id="available-spells">
+                <!-- Spells will be populated here dynamically -->
+            </ul>
+        </div>
+
+        <div class="selected-spells">
+            <h2>Selected Spells</h2>
+            <ul id="selected-spells">
+                <!-- Selected spells will appear here -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const spells = []; // Load this dynamically from the JSON file.
+        const selectedSpells = [];
+
+        function filterSpells() {
+            const level = document.getElementById('spell-level').value;
+            const type = document.getElementById('spell-type').value;
+            const filteredSpells = spells.filter(spell => 
+                (level === 'Cantrip' ? spell.level === 0 : spell.level == level) &&
+                (type === 'all' || spell.type === type)
+            );
+            displaySpells(filteredSpells);
+        }
+
+        function displaySpells(filteredSpells) {
+            const availableSpellsEl = document.getElementById('available-spells');
+            availableSpellsEl.innerHTML = '';
+            filteredSpells.forEach(spell => {
+                const li = document.createElement('li');
+                li.textContent = `${spell.name} (${spell.type})`;
+                const button = document.createElement('button');
+                button.textContent = 'Add';
+                button.onclick = () => selectSpell(spell);
+                li.appendChild(button);
+                availableSpellsEl.appendChild(li);
+            });
+        }
+
+        function selectSpell(spell) {
+            if (!selectedSpells.includes(spell)) {
+                selectedSpells.push(spell);
+                updateSelectedSpells();
+            }
+        }
+
+        function updateSelectedSpells() {
+            const selectedSpellsEl = document.getElementById('selected-spells');
+            selectedSpellsEl.innerHTML = '';
+            selectedSpells.forEach(spell => {
+                const li = document.createElement('li');
+                li.textContent = `${spell.name} (${spell.type})`;
+                const button = document.createElement('button');
+                button.textContent = 'Remove';
+                button.className = 'remove';
+                button.onclick = () => {
+                    selectedSpells.splice(selectedSpells.indexOf(spell), 1);
+                    updateSelectedSpells();
+                };
+                li.appendChild(button);
+                selectedSpellsEl.appendChild(li);
+            });
+        }
+
+        // Example: Load spells dynamically (replace with JSON fetch in real implementation)
+        fetch('spells.json')
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(spell => {
+                    if (spell.traditions.includes('Divine') && spell.classes.includes('Oracle')) {
+                        spells.push({
+                            name: spell.name,
+                            level: spell.level,
+                            type: spell.tags.includes('Offensive') ? 'offensive' : 'defensive'
+                        });
+                    }
+                });
+                filterSpells();
+            });
+    </script>
+</body>
+</html>
