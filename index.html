@@ -108,12 +108,13 @@
         <div class="tabs">
             <div class="tab active" onclick="switchTab(event, 'available-spells')">Available Spells</div>
             <div class="tab" onclick="switchTab(event, 'selected-spells')">Selected Spells</div>
+            <div class="tab" onclick="switchTab(event, 'all-spells')">All Spells</div>
         </div>
 
         <div id="available-spells" class="tab-content active">
             <h2>Available Spells</h2>
             <ul id="available-spell-list">
-                <!-- Spells will be populated here dynamically -->
+                <!-- Filtered spells will appear here -->
             </ul>
         </div>
 
@@ -121,6 +122,13 @@
             <h2>Selected Spells</h2>
             <ul id="selected-spell-list">
                 <!-- Selected spells will appear here -->
+            </ul>
+        </div>
+
+        <div id="all-spells" class="tab-content">
+            <h2>All Spells</h2>
+            <ul id="all-spell-list">
+                <!-- All spells from the JSON will appear here -->
             </ul>
         </div>
     </div>
@@ -136,20 +144,22 @@
                 (level === 'Cantrip' ? spell.level === 0 : spell.level == level) &&
                 (type === 'all' || spell.type === type)
             );
-            displaySpells(filteredSpells);
+            displaySpells(filteredSpells, 'available-spell-list');
         }
 
-        function displaySpells(filteredSpells) {
-            const availableSpellsEl = document.getElementById('available-spell-list');
-            availableSpellsEl.innerHTML = '';
-            filteredSpells.forEach(spell => {
+        function displaySpells(spellList, elementId) {
+            const listElement = document.getElementById(elementId);
+            listElement.innerHTML = '';
+            spellList.forEach(spell => {
                 const li = document.createElement('li');
-                li.textContent = `${spell.name} (${spell.type})`;
-                const button = document.createElement('button');
-                button.textContent = 'Add';
-                button.onclick = () => selectSpell(spell);
-                li.appendChild(button);
-                availableSpellsEl.appendChild(li);
+                li.textContent = `${spell.name} (Level: ${spell.level}, Type: ${spell.type || 'N/A'})`;
+                if (elementId === 'available-spell-list') {
+                    const button = document.createElement('button');
+                    button.textContent = 'Add';
+                    button.onclick = () => selectSpell(spell);
+                    li.appendChild(button);
+                }
+                listElement.appendChild(li);
             });
         }
 
@@ -161,20 +171,7 @@
         }
 
         function updateSelectedSpells() {
-            const selectedSpellsEl = document.getElementById('selected-spell-list');
-            selectedSpellsEl.innerHTML = '';
-            selectedSpells.forEach(spell => {
-                const li = document.createElement('li');
-                li.textContent = `${spell.name} (${spell.type})`;
-                const button = document.createElement('button');
-                button.textContent = 'Remove';
-                button.onclick = () => {
-                    selectedSpells.splice(selectedSpells.indexOf(spell), 1);
-                    updateSelectedSpells();
-                };
-                li.appendChild(button);
-                selectedSpellsEl.appendChild(li);
-            });
+            displaySpells(selectedSpells, 'selected-spell-list');
         }
 
         function switchTab(event, tabId) {
@@ -184,7 +181,7 @@
             document.getElementById(tabId).classList.add('active');
         }
 
-        // Example: Load spells dynamically (replace with JSON fetch in real implementation)
+        // Load all spells from JSON and display them in the "All Spells" tab
         fetch('https://davidaerne.github.io/OracleSpells/spells.json')
             .then(response => {
                 if (!response.ok) {
@@ -194,21 +191,20 @@
             })
             .then(data => {
                 data.forEach(spell => {
-                    // Ensure spell matches "Divine" tradition and "Oracle" class
-                    if (spell.traditions && spell.traditions.includes('Divine') && spell.classes && spell.classes.includes('Oracle')) {
-                        spells.push({
-                            name: spell.name,
-                            level: spell.level,
-                            type: spell.tags ? (spell.tags.includes('Offensive') ? 'offensive' : 'defensive') : 'unknown'
-                        });
-                    }
+                    spells.push({
+                        name: spell.name,
+                        level: spell.level,
+                        type: spell.tags ? (spell.tags.includes('Offensive') ? 'offensive' : 'defensive') : 'unknown',
+                        traditions: spell.traditions,
+                        classes: spell.classes
+                    });
                 });
-                filterSpells(); // Trigger the initial display
+                displaySpells(spells, 'all-spell-list'); // Populate All Spells tab
+                filterSpells(); // Trigger initial filtering for Available Spells
             })
             .catch(error => {
                 console.error('Error loading spells:', error);
             });
-
     </script>
 </body>
 </html>
