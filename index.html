@@ -229,7 +229,9 @@
                     spells.push({
                         name: spell.name,
                         level: spell.level,
-                        type: spell.tags ? (spell.tags.includes('Offensive') ? 'offensive' : 'defensive') : 'unknown',
+                        type: spell.tags && spell.tags.length > 0 
+                            ? (spell.tags.includes('Offensive') ? 'offensive' : 'defensive') 
+                            : (spell.traditions && spell.traditions.includes('Divine') ? 'support' : 'unknown'),
                         traditions: spell.traditions,
                         classes: spell.classes
                     });
