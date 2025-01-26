@@ -45,6 +45,8 @@
             background: #f9f9f9;
             border: 1px solid #ddd;
             border-radius: 5px;
+        }
+        .spell-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -179,7 +181,13 @@
             spellList.forEach(spell => {
                 const li = document.createElement('li');
                 li.classList.add('spell-item');
-                li.textContent = spell.name;
+
+                const headerDiv = document.createElement('div');
+                headerDiv.classList.add('spell-header');
+                headerDiv.innerHTML = `
+                    <span>${spell.name}</span>
+                    <button onclick="addSpell('${spell.name}')">+</button>
+                `;
 
                 const detailsDiv = document.createElement('div');
                 detailsDiv.classList.add('spell-details');
@@ -192,15 +200,26 @@
                     <strong>Description:</strong> ${spell.description || 'No description available'}<br>
                 `;
 
-                li.onclick = () => {
-                    const currentlyActive = detailsDiv.classList.contains('active');
-                    document.querySelectorAll('.spell-details').forEach(detail => detail.classList.remove('active'));
-                    if (!currentlyActive) detailsDiv.classList.add('active');
+                li.onclick = (event) => {
+                    if (!event.target.matches('button')) {
+                        const currentlyActive = detailsDiv.classList.contains('active');
+                        document.querySelectorAll('.spell-details').forEach(detail => detail.classList.remove('active'));
+                        if (!currentlyActive) detailsDiv.classList.add('active');
+                    }
                 };
 
+                li.appendChild(headerDiv);
                 li.appendChild(detailsDiv);
                 listElement.appendChild(li);
             });
+        }
+
+        function addSpell(spellName) {
+            const spell = spells.find(sp => sp.name === spellName);
+            if (spell && !selectedSpells.includes(spell)) {
+                selectedSpells.push(spell);
+                displaySpells(selectedSpells, 'selected-spell-list');
+            }
         }
 
         function switchTab(event, tabId) {
