@@ -39,12 +39,26 @@
             list-style: none;
             padding: 0;
         }
-        .spell-list ul li {
+        .spell-item {
             padding: 10px;
             margin-bottom: 5px;
             background: #f9f9f9;
             border: 1px solid #ddd;
             border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .spell-details {
+            display: flex;
+            flex-direction: column;
+        }
+        .spell-name {
+            font-weight: bold;
+        }
+        .spell-type {
+            font-size: 0.9em;
+            color: #555;
         }
         .tabs {
             display: flex;
@@ -156,10 +170,27 @@
             listElement.innerHTML = '';
             spellList.forEach(spell => {
                 const li = document.createElement('li');
-                li.textContent = `${spell.name} (Level: ${spell.level}, Type: ${spell.type || 'N/A'})`;
+                li.classList.add('spell-item');
+
+                const detailsDiv = document.createElement('div');
+                detailsDiv.classList.add('spell-details');
+
+                const nameDiv = document.createElement('div');
+                nameDiv.classList.add('spell-name');
+                nameDiv.textContent = spell.name;
+
+                const typeDiv = document.createElement('div');
+                typeDiv.classList.add('spell-type');
+                typeDiv.textContent = `Level: ${spell.level}, Type: ${spell.type || 'N/A'}`;
+
+                detailsDiv.appendChild(nameDiv);
+                detailsDiv.appendChild(typeDiv);
+
+                li.appendChild(detailsDiv);
+
                 if (elementId === 'available-spell-list') {
                     const button = document.createElement('button');
-                    button.textContent = 'Add';
+                    button.textContent = '+';
                     button.onclick = () => selectSpell(spell);
                     li.appendChild(button);
                 }
