@@ -187,7 +187,9 @@
                     <strong>Level:</strong> ${spell.level}<br>
                     <strong>Type:</strong> ${spell.type || 'N/A'}<br>
                     <strong>Traditions:</strong> ${spell.traditions.join(', ')}<br>
-                    <strong>Classes:</strong> ${spell.classes.join(', ')}<br>
+                    <strong>Cast:</strong> ${spell.cast || 'Unknown'}<br>
+                    <strong>Range:</strong> ${spell.range || 'Unknown'}<br>
+                    <strong>Description:</strong> ${spell.description || 'No description available'}<br>
                 `;
 
                 li.onclick = () => {
@@ -223,7 +225,9 @@
                         level: spell.level,
                         type: spell.tags ? (spell.tags.includes('Offensive') ? 'offensive' : 'defensive') : 'unknown',
                         traditions: spell.traditions || [],
-                        classes: spell.classes || []
+                        cast: spell.cast || 'Unknown',
+                        range: spell.range || 'Unknown',
+                        description: spell.description || 'No description available'
                     });
                 });
                 displaySpells(spells, 'all-spell-list'); // Populate All Spells tab
