@@ -48,10 +48,18 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            cursor: pointer;
         }
         .spell-details {
-            display: flex;
-            flex-direction: column;
+            display: none;
+            padding: 10px;
+            margin-top: 5px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .spell-details.active {
+            display: block;
         }
         .spell-name {
             font-weight: bold;
@@ -171,42 +179,26 @@
             spellList.forEach(spell => {
                 const li = document.createElement('li');
                 li.classList.add('spell-item');
+                li.textContent = spell.name;
 
                 const detailsDiv = document.createElement('div');
                 detailsDiv.classList.add('spell-details');
+                detailsDiv.innerHTML = `
+                    <strong>Level:</strong> ${spell.level}<br>
+                    <strong>Type:</strong> ${spell.type || 'N/A'}<br>
+                    <strong>Traditions:</strong> ${spell.traditions.join(', ')}<br>
+                    <strong>Classes:</strong> ${spell.classes.join(', ')}<br>
+                `;
 
-                const nameDiv = document.createElement('div');
-                nameDiv.classList.add('spell-name');
-                nameDiv.textContent = spell.name;
-
-                const typeDiv = document.createElement('div');
-                typeDiv.classList.add('spell-type');
-                typeDiv.textContent = `Level: ${spell.level}, Type: ${spell.type || 'N/A'}`;
-
-                detailsDiv.appendChild(nameDiv);
-                detailsDiv.appendChild(typeDiv);
+                li.onclick = () => {
+                    const currentlyActive = detailsDiv.classList.contains('active');
+                    document.querySelectorAll('.spell-details').forEach(detail => detail.classList.remove('active'));
+                    if (!currentlyActive) detailsDiv.classList.add('active');
+                };
 
                 li.appendChild(detailsDiv);
-
-                if (elementId === 'available-spell-list') {
-                    const button = document.createElement('button');
-                    button.textContent = '+';
-                    button.onclick = () => selectSpell(spell);
-                    li.appendChild(button);
-                }
                 listElement.appendChild(li);
             });
-        }
-
-        function selectSpell(spell) {
-            if (!selectedSpells.includes(spell)) {
-                selectedSpells.push(spell);
-                updateSelectedSpells();
-            }
-        }
-
-        function updateSelectedSpells() {
-            displaySpells(selectedSpells, 'selected-spell-list');
         }
 
         function switchTab(event, tabId) {
@@ -229,11 +221,9 @@
                     spells.push({
                         name: spell.name,
                         level: spell.level,
-                        type: spell.tags && spell.tags.length > 0 
-                            ? (spell.tags.includes('Offensive') ? 'offensive' : 'defensive') 
-                            : (spell.traditions && spell.traditions.includes('Divine') ? 'support' : 'unknown'),
-                        traditions: spell.traditions,
-                        classes: spell.classes
+                        type: spell.tags ? (spell.tags.includes('Offensive') ? 'offensive' : 'defensive') : 'unknown',
+                        traditions: spell.traditions || [],
+                        classes: spell.classes || []
                     });
                 });
                 displaySpells(spells, 'all-spell-list'); // Populate All Spells tab
