@@ -29,7 +29,7 @@
         .filter-section, .spell-list, .tabs {
             margin-bottom: 20px;
         }
-        .filter-section select, .spell-list button {
+        .filter-section select, .spell-list button, .filter-section input {
             margin: 5px;
             padding: 10px;
             border-radius: 5px;
@@ -102,6 +102,7 @@
                 <option value="offensive">Offensive</option>
                 <option value="defensive">Defensive</option>
             </select>
+            <input type="text" id="search-box" placeholder="Search by spell name...">
             <button onclick="filterSpells()">Filter</button>
         </div>
 
@@ -140,9 +141,12 @@
         function filterSpells() {
             const level = document.getElementById('spell-level').value;
             const type = document.getElementById('spell-type').value;
+            const searchQuery = document.getElementById('search-box').value.toLowerCase();
+
             const filteredSpells = spells.filter(spell => 
                 (level === 'Cantrip' ? spell.level === 0 : spell.level == level) &&
-                (type === 'all' || spell.type === type)
+                (type === 'all' || spell.type === type) &&
+                (spell.name.toLowerCase().includes(searchQuery))
             );
             displaySpells(filteredSpells, 'available-spell-list');
         }
