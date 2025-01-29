@@ -3,6 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pathfinder 2e Oracle Spell Selector</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #spell-list, #selected-spells { list-style-type: none; padding: 0; }
+        li { cursor: pointer; padding: 5px; border: 1px solid #ddd; margin: 5px; }
+        li:hover { background-color: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <h1>Oracle Spell Selector</h1>
+    <h2>Available Spells</h2>
+    <ul id="spell-list"></ul>
+    
+    <h2>Selected Spells</h2>
+    <ul id="selected-spells"></ul>
+    
+    <button onclick="saveSelectedSpells()">Save Selected Spells</button>
+    <button onclick="clearSelectedSpells()">Clear Selected Spells</button>
+    
+    <script>
+        // Fetch spell data from spells.json
+        fetch('spells.json')
+            .then(response => response.json())
+            .then(spells => {
+                const spellList = document.getElementById('spell-list');
+                spells.forEach(spell => {
+                    const li = document.createElement('li');
+                    li.textContent = spell.name;
+                    li.onclick = () => selectSpell(spell.name);
+                    spellList.appendChild(li);
+                });
+            });
+
+        function selectSpell(spellName) {
+            const selectedSpellsList = document.getElementById('selected-spells');
+            const li = document.createElement('li');
+            li.textContent = spellName;
+            li.onclick = () => li.remove();
+            selectedSpellsList.appendChild(li);
+        }
+
+        function saveSelectedSpells() {
+            const selectedSpells = [...document.querySelectorAll('#selected-spells li')].map(li => li.textContent);
+            localStorage.setItem('selectedSpells', JSON.stringify(selectedSpells));
+            alert('Selected spells saved!');
+        }
+
+        function loadSelectedSpells() {
+            const savedSpells = JSON.parse(localStorage.getItem('selectedSpells')) || [];
+            const selectedSpellsList = document.getElementById('selected-spells');
+            selectedSpellsList.innerHTML = '';
+            savedSpells.forEach(spell => {
+                const li = document.createElement('li');
+                li.textContent = spell;
+                li.onclick = () => li.remove();
+                selectedSpellsList.appendChild(li);
+            });
+        }
+
+        function clearSelectedSpells() {
+            localStorage.removeItem('selectedSpells');
+            document.getElementById('selected-spells').innerHTML = '';
+        }
+
+        window.onload = loadSelectedSpells;
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Oracle Spell Selector</title>
     <style>
         body {
