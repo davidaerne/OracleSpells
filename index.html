@@ -5,13 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pathfinder 2e Oracle Spell Selector</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-        .container { display: flex; flex-direction: column; align-items: center; }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f8f9fa; }
+        .container { display: flex; flex-direction: column; align-items: center; width: 90%; max-width: 800px; margin: auto; }
         #controls { margin-bottom: 20px; text-align: center; }
-        #spell-list, #selected-spells { list-style-type: none; padding: 0; width: 100%; max-width: 600px; }
-        li { cursor: pointer; padding: 10px; border: 1px solid #ddd; margin: 5px; background: #fff; text-align: center; }
-        li:hover { background-color: #f0f0f0; }
-        button { margin: 5px; padding: 10px; font-size: 16px; }
+        #spell-list, #selected-spells { list-style-type: none; padding: 0; width: 100%; background: white; border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+        li { cursor: pointer; padding: 10px; border-bottom: 1px solid #ddd; text-align: center; transition: background 0.3s; }
+        li:hover { background-color: #e9ecef; }
+        li:last-child { border-bottom: none; }
+        button { margin: 5px; padding: 10px 15px; font-size: 16px; border: none; border-radius: 5px; background: #007bff; color: white; cursor: pointer; transition: background 0.3s; }
+        button:hover { background: #0056b3; }
+        h1, h2 { text-align: center; }
     </style>
 </head>
 <body>
@@ -19,7 +22,7 @@
         <h1>Oracle Spell Selector</h1>
         <div id="controls">
             <button onclick="saveSelectedSpells()">Save Selected Spells</button>
-            <button onclick="clearSelectedSpells()">Clear Selected Spells</button>
+            <button onclick="clearSelectedSpells()" style="background: #dc3545;">Clear Selected Spells</button>
         </div>
         <h2>Available Spells</h2>
         <ul id="spell-list"></ul>
