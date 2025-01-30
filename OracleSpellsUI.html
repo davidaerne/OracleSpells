@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>PF2e Oracle/Divine Spells</title>
+  <title>PF2e Spells with Action Circles</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -13,7 +13,8 @@
       text-align: center;
       margin-bottom: 1em;
     }
-    /* Collapsible sections for each spell level */
+
+    /* A quick collapsible setup for levels, same as before */
     .collapsible {
       background-color: #eee;
       color: #444;
@@ -44,7 +45,7 @@
     .spell-item {
       border-bottom: 1px solid #ddd;
       padding: 10px 0;
-      cursor: pointer; /* indicates clickable */
+      cursor: pointer;
     }
     .spell-item:last-child {
       border-bottom: none;
@@ -57,29 +58,25 @@
       color: #888;
     }
 
-    /* Modal overlay */
+    /* Modal styling */
     .modal {
-      display: none; /* Hidden by default */
-      position: fixed; /* Stay in place */
-      z-index: 9999; /* Sit on top */
-      left: 0;
-      top: 0;
-      width: 100%; /* Full width */
-      height: 100%; /* Full height */
-      overflow: auto; /* Enable scroll if needed */
-      background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
     }
-    /* Modal content box */
     .modal-content {
       background-color: #fff;
-      margin: 5% auto; /* 5% from top and centered */
+      margin: 5% auto;
       padding: 20px;
       border-radius: 6px;
       width: 90%;
       max-width: 600px;
       position: relative;
     }
-    /* Close button (X) */
     .close-modal {
       position: absolute;
       right: 16px;
@@ -92,7 +89,22 @@
       color: #999;
     }
 
-    /* Spell modal styling */
+    /* Action circle styling */
+    .action-circle {
+      display: inline-block;
+      width: 1.3em;
+      height: 1.3em;
+      line-height: 1.3em;
+      text-align: center;
+      vertical-align: middle;
+      border-radius: 50%;
+      background-color: #333;   /* black or dark gray */
+      color: #fff;
+      font-weight: bold;
+      margin: 0 4px;
+    }
+
+    /* A few more styling tweaks for the modal layout */
     #modal-title {
       margin-top: 0;
     }
@@ -101,7 +113,7 @@
     }
     .trait-tag {
       display: inline-block;
-      background-color: #b33131; /* Reddish background for demonstration */
+      background-color: #b33131;
       color: #fff;
       padding: 4px 8px;
       border-radius: 4px;
@@ -109,7 +121,6 @@
       margin-bottom: 5px;
       font-size: 14px;
     }
-    /* Additional fields in modal */
     .modal-field-label {
       font-weight: bold;
       margin-top: 12px;
@@ -121,17 +132,15 @@
 </head>
 <body>
 
-<h1>Oracle &amp; Divine Spells (Click a Spell)</h1>
+<h1>PF2e Spells (with Action Circles)</h1>
 
-<!-- Container for collapsible level sections -->
 <div id="spell-container"></div>
 
-<!-- The Modal (hidden by default) -->
+<!-- Modal for spell details -->
 <div id="spell-modal" class="modal">
   <div class="modal-content">
     <span id="close-modal" class="close-modal">&times;</span>
-
-    <!-- We’ll fill these with JavaScript -->
+    <!-- We’ll fill these fields with JS -->
     <h2 id="modal-title"></h2>
     <div id="modal-level"></div>
     <div class="trait-tags" id="modal-traits"></div>
@@ -151,22 +160,17 @@
 </div>
 
 <script>
-  // 1) Fetch spells
+  // Fetch from your GitHub JSON
   fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/refs/heads/main/spells.json')
     .then(response => response.json())
     .then(spellsData => {
-      // 2) Filter spells
       const filteredSpells = filterSpells(spellsData);
-      // 3) Group them by level (treat cantrips as level 0)
       const grouped = groupByLevel(filteredSpells);
-      // 4) Render collapsibles
       renderCollapsibles(grouped);
     })
-    .catch(error => console.error("Error fetching spells:", error));
+    .catch(err => console.error("Fetch error:", err));
 
-  /**
-   * Filter for 'divine' or 'oracle' in traditions or traits (case-insensitive).
-   */
+  // Filter for 'divine' or 'oracle' in traditions/traits
   function filterSpells(spells) {
     return spells.filter(spell => {
       const traditions = (spell.traditions || []).map(t => t.toLowerCase());
@@ -176,26 +180,20 @@
     });
   }
 
-  // Check if a spell is a cantrip (by trait or type)
   function isCantrip(spell) {
     const traitsLower = (spell.traits || []).map(t => t.toLowerCase());
     const typeLower = (spell.type || '').toLowerCase();
     return traitsLower.includes('cantrip') || typeLower === 'cantrip';
   }
 
-  // Group spells by level, forcing cantrips to level 0
   function groupByLevel(spells) {
     const groups = {};
     spells.forEach(spell => {
-      let levelNum = 0; // default
+      let levelNum = 0;
       if (!isCantrip(spell)) {
-        // parse if not a cantrip
-        const maybeNum = parseInt(spell.level, 10);
-        if (!isNaN(maybeNum)) {
-          levelNum = maybeNum;
-        } else {
-          levelNum = -1;
-        }
+        const parsed = parseInt(spell.level, 10);
+        if (!isNaN(parsed)) levelNum = parsed;
+        else levelNum = -1;
       }
       if (!groups[levelNum]) groups[levelNum] = [];
       groups[levelNum].push(spell);
@@ -203,81 +201,64 @@
     return groups;
   }
 
-  // Render collapsible sections by level
   function renderCollapsibles(groupedSpells) {
     const container = document.getElementById('spell-container');
-    const sortedLevels = Object.keys(groupedSpells)
-      .map(Number)
-      .sort((a, b) => a - b);
+    const sortedLevels = Object.keys(groupedSpells).map(Number).sort((a, b) => a - b);
 
     sortedLevels.forEach(level => {
       const spellsAtLevel = groupedSpells[level];
-
-      // Collapsible button
       const button = document.createElement('button');
       button.classList.add('collapsible');
-      // If level is 0, label "Cantrips" with no "Spell 0"
       button.textContent = (level === 0 ? 'Cantrips' : `Level ${level}`);
 
-      // Collapsible content container
       const contentDiv = document.createElement('div');
       contentDiv.classList.add('collapsible-content');
 
-      // Fill with spells
       spellsAtLevel.forEach(spell => {
         const spellDiv = document.createElement('div');
         spellDiv.classList.add('spell-item');
 
-        // Name
         const nameEl = document.createElement('div');
         nameEl.classList.add('spell-name');
         nameEl.textContent = spell.name || '(No Name)';
 
-        // Traits
         const traitsEl = document.createElement('div');
         traitsEl.classList.add('spell-traits');
         traitsEl.textContent = `Traits: ${(spell.traits || []).join(', ')}`;
 
+        // Clicking a spell -> open modal
+        spellDiv.addEventListener('click', () => openSpellModal(spell));
+
         spellDiv.appendChild(nameEl);
         spellDiv.appendChild(traitsEl);
-
-        // On click, open the modal
-        spellDiv.addEventListener('click', () => openSpellModal(spell, level));
-
         contentDiv.appendChild(spellDiv);
       });
 
       container.appendChild(button);
       container.appendChild(contentDiv);
 
-      // Collapsible toggle
       button.addEventListener('click', function() {
         this.classList.toggle('active');
-        contentDiv.style.display = (contentDiv.style.display === 'block')
-          ? 'none'
-          : 'block';
+        contentDiv.style.display = (contentDiv.style.display === 'block') ? 'none' : 'block';
       });
     });
   }
 
-  // Opens the modal with a layout similar to your screenshot
-  function openSpellModal(spell, level) {
+  function openSpellModal(spell) {
     // Title
     document.getElementById('modal-title').textContent = spell.name || 'Unknown Spell';
 
-    // If cantrip, no "Spell 0" line; else "Spell X"
-    let levelText = '';
+    // Level text: omit if cantrip
+    let lvlTxt = '';
     if (!isCantrip(spell)) {
-      const numericLevel = parseInt(spell.level, 10);
-      if (!isNaN(numericLevel)) {
-        levelText = `Spell ${numericLevel}`;
-      }
+      const lvlParsed = parseInt(spell.level, 10);
+      if (!isNaN(lvlParsed)) lvlTxt = `Spell ${lvlParsed}`;
     }
-    document.getElementById('modal-level').textContent = levelText;
+    document.getElementById('modal-level').textContent = lvlTxt;
 
     // Trait tags
     const traitsContainer = document.getElementById('modal-traits');
-    traitsContainer.innerHTML = ''; // clear previous
+    traitsContainer.innerHTML = '';
     (spell.traits || []).forEach(trait => {
       const tag = document.createElement('span');
       tag.classList.add('trait-tag');
@@ -286,50 +267,51 @@
     });
 
     // Traditions
-    document.getElementById('modal-traditions').textContent =
-      (spell.traditions || []).join(', ');
+    document.getElementById('modal-traditions').textContent = (spell.traditions || []).join(', ');
 
-    // Cast (combine action, cast, components)
+    // Cast string
     let castString = '';
     if (spell.action) {
-      castString += `Actions: ${spell.action} `;
+      // If a spell has both action and actionMax, you could show "1–3" icons, etc.
+      // For now, just show the numeric or let them do an icon for each one
+      castString += `Actions: ${spell.action}`;
+      if (spell.actionMax) castString += `-${spell.actionMax}`;
     }
-    if (spell.cast) {
-      castString += `; ${spell.cast}`;
-    }
-    if (spell.components) {
-      castString += `; Components: ${spell.components.join(', ')}`;
-    }
-    document.getElementById('modal-cast').textContent = castString.replace(/^;\s*/, '');
+    if (spell.cast) castString += `; ${spell.cast}`;
+    if (spell.components) castString += `; Components: ${spell.components.join(', ')}`;
+    // Trim leading ';'
+    castString = castString.replace(/^;\s*/, '');
+    document.getElementById('modal-cast').textContent = castString || '(No cast info)';
 
     // Range
     document.getElementById('modal-range').textContent = spell.range || '(No range specified)';
 
-    // Description: parse out **...** → new line + bold
+    // Description: 
+    // 1) Replace **...** with <strong> 
+    // 2) Replace |X| with our action-circle
     let desc = spell.description || '(No description)';
+    // Bold sections
     desc = desc.replace(/\*\*(.*?)\*\*/g, '<br><strong>$1</strong><br>');
-    // Finally set as innerHTML so the <strong> etc. render
+    // Action circle replace: match |digit(s)|
+    desc = desc.replace(/\|(\d+)\|/g, '<span class="action-circle">$1</span>');
+
     document.getElementById('modal-description').innerHTML = desc;
 
-    // Show the modal
+    // Show modal
     document.getElementById('spell-modal').style.display = 'block';
   }
 
-  // Close modal function
-  function closeModal() {
+  // Close modal
+  document.getElementById('close-modal').addEventListener('click', () => {
     document.getElementById('spell-modal').style.display = 'none';
-  }
-
-  // Attach close event
-  document.getElementById('close-modal').addEventListener('click', closeModal);
-
-  // Also close if user clicks outside modal content
-  window.addEventListener('click', function(event) {
+  });
+  window.addEventListener('click', e => {
     const modal = document.getElementById('spell-modal');
-    if (event.target === modal) {
-      closeModal();
+    if (e.target === modal) {
+      modal.style.display = 'none';
     }
   });
 </script>
+
 </body>
 </html>
