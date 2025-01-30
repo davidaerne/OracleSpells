@@ -66,9 +66,12 @@
                 const response = await fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/main/spells.json');
                 const spells = await response.json();
                 
-                // Normalize traits to lowercase and filter for Oracle + Divine spells (Cantrip, Level 1, Level 2)
+                // Normalize traits to lowercase and ensure traits array exists
                 spellsData = spells.filter(spell => {
-                    const traits = spell.traits?.map(t => t.toLowerCase()) || [];
+                    if (!spell.traits || !Array.isArray(spell.traits)) return false;
+                    
+                    const traits = spell.traits.map(t => t.trim().toLowerCase()); // Trim spaces and normalize case
+                    
                     return traits.includes("oracle") && traits.includes("divine") &&
                            ["cantrip", 1, 2, "1", "2"].includes(spell.level);
                 });
