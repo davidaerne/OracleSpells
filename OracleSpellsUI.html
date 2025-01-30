@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>PF2e Oracle/Divine Spells</title>
+  <title>PF2e Oracle/Divine Spells (with Cantrips)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -60,7 +60,7 @@
 </head>
 <body>
 
-<h1>Oracle & Divine Spells</h1>
+<h1>Oracle & Divine Spells (Cantrip Fix)</h1>
 <div id="spell-container"></div>
 
 <script>
@@ -70,14 +70,14 @@
     .then(spellsData => {
       console.log("First spell object for debugging:", spellsData[0]);
 
-      // 1. Filter for spells containing 'divine' or 'oracle' (case-insensitive)
+      // 1. Filter for spells that contain 'divine' or 'oracle' (case-insensitive)
       const filteredSpells = filterSpells(spellsData);
       console.log("Filtered spells:", filteredSpells);
 
-      // 2. Group by level
+      // 2. Group spells by level (forcing cantrips to level 0)
       const grouped = groupByLevel(filteredSpells);
 
-      // 3. Render collapsibles
+      // 3. Render collapsible sections
       renderCollapsibles(grouped);
     })
     .catch(error => console.error("Error fetching spells:", error));
@@ -100,18 +100,31 @@
     });
   }
 
-  // Group spells by their spell level (converted to number)
+  // A helper to check if a spell is a cantrip (by trait or type)
+  function isCantrip(spell) {
+    const traitsLower = (spell.traits || []).map(t => t.toLowerCase());
+    const typeLower = (spell.type || '').toLowerCase();
+    return (traitsLower.includes('cantrip') || typeLower === 'cantrip');
+  }
+
+  // Group spells by their spell level, forcing cantrips to level 0
   function groupByLevel(spells) {
     const groups = {};
     spells.forEach(spell => {
-      let levelNum = spell.level;
-      // Convert to number if needed
-      if (typeof levelNum === "string") {
-        levelNum = parseInt(levelNum, 10);
+      let levelNum;
+
+      // If it's a cantrip, treat level as 0
+      if (isCantrip(spell)) {
+        levelNum = 0;
+      } else {
+        // Otherwise, parse from JSON
+        levelNum = parseInt(spell.level, 10);
+        if (isNaN(levelNum)) {
+          levelNum = -1; // fallback if invalid
+        }
       }
-      if (isNaN(levelNum)) {
-        levelNum = -1; // fallback if invalid
-      }
+
+      // Initialize array
       if (!groups[levelNum]) {
         groups[levelNum] = [];
       }
@@ -155,7 +168,6 @@
         // Traits
         const traitsEl = document.createElement('div');
         traitsEl.classList.add('spell-traits');
-        // Convert traits to string
         let traitsStr = Array.isArray(spell.traits) 
           ? spell.traits.join(', ') 
           : (spell.traits || '');
@@ -187,5 +199,6 @@
     });
   }
 </script>
+
 </body>
 </html>
