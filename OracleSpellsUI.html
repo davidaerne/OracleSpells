@@ -44,7 +44,7 @@
     .spell-item {
       border-bottom: 1px solid #ddd;
       padding: 10px 0;
-      cursor: pointer; /* so we know it’s clickable */
+      cursor: pointer; /* indicates clickable */
     }
     .spell-item:last-child {
       border-bottom: none;
@@ -92,21 +92,16 @@
       color: #999;
     }
 
-    /* Spell modal styling (like your screenshot) */
+    /* Spell modal styling */
     #modal-title {
       margin-top: 0;
-    }
-    .spell-level-label {
-      font-weight: bold;
-      color: #444;
-      margin-bottom: 8px;
     }
     .trait-tags {
       margin: 8px 0;
     }
     .trait-tag {
       display: inline-block;
-      background-color: #b33131; /* a "red" background for demonstration */
+      background-color: #b33131; /* Reddish background for demonstration */
       color: #fff;
       padding: 4px 8px;
       border-radius: 4px;
@@ -156,23 +151,21 @@
 </div>
 
 <script>
-  // 1) Fetch spells from GitHub
+  // 1) Fetch spells
   fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/refs/heads/main/spells.json')
     .then(response => response.json())
     .then(spellsData => {
-      // 2) Filter them
+      // 2) Filter spells
       const filteredSpells = filterSpells(spellsData);
-      // 3) Group them by level (0 for cantrips)
+      // 3) Group them by level (treat cantrips as level 0)
       const grouped = groupByLevel(filteredSpells);
       // 4) Render collapsibles
       renderCollapsibles(grouped);
     })
     .catch(error => console.error("Error fetching spells:", error));
 
-
   /**
-   * Filter spells if they have 'divine' or 'oracle' in
-   * traditions or traits (case-insensitive).
+   * Filter for 'divine' or 'oracle' in traditions or traits (case-insensitive).
    */
   function filterSpells(spells) {
     return spells.filter(spell => {
@@ -187,30 +180,30 @@
   function isCantrip(spell) {
     const traitsLower = (spell.traits || []).map(t => t.toLowerCase());
     const typeLower = (spell.type || '').toLowerCase();
-    return (traitsLower.includes('cantrip') || typeLower === 'cantrip');
+    return traitsLower.includes('cantrip') || typeLower === 'cantrip';
   }
 
   // Group spells by level, forcing cantrips to level 0
   function groupByLevel(spells) {
     const groups = {};
     spells.forEach(spell => {
-      let levelNum;
-      if (isCantrip(spell)) {
-        levelNum = 0;
-      } else {
-        // parse level if needed
-        levelNum = parseInt(spell.level, 10);
-        if (isNaN(levelNum)) levelNum = -1;
+      let levelNum = 0; // default
+      if (!isCantrip(spell)) {
+        // parse if not a cantrip
+        const maybeNum = parseInt(spell.level, 10);
+        if (!isNaN(maybeNum)) {
+          levelNum = maybeNum;
+        } else {
+          levelNum = -1;
+        }
       }
-      if (!groups[levelNum]) {
-        groups[levelNum] = [];
-      }
+      if (!groups[levelNum]) groups[levelNum] = [];
       groups[levelNum].push(spell);
     });
     return groups;
   }
 
-  // Render collapsible sections for each spell level
+  // Render collapsible sections by level
   function renderCollapsibles(groupedSpells) {
     const container = document.getElementById('spell-container');
     const sortedLevels = Object.keys(groupedSpells)
@@ -223,6 +216,7 @@
       // Collapsible button
       const button = document.createElement('button');
       button.classList.add('collapsible');
+      // If level is 0, label "Cantrips" with no "Spell 0"
       button.textContent = (level === 0 ? 'Cantrips' : `Level ${level}`);
 
       // Collapsible content container
@@ -234,10 +228,12 @@
         const spellDiv = document.createElement('div');
         spellDiv.classList.add('spell-item');
 
+        // Name
         const nameEl = document.createElement('div');
         nameEl.classList.add('spell-name');
         nameEl.textContent = spell.name || '(No Name)';
 
+        // Traits
         const traitsEl = document.createElement('div');
         traitsEl.classList.add('spell-traits');
         traitsEl.textContent = `Traits: ${(spell.traits || []).join(', ')}`;
@@ -245,8 +241,8 @@
         spellDiv.appendChild(nameEl);
         spellDiv.appendChild(traitsEl);
 
-        // When user clicks a spell, open the modal with details
-        spellDiv.addEventListener('click', () => openSpellModal(spell));
+        // On click, open the modal
+        spellDiv.addEventListener('click', () => openSpellModal(spell, level));
 
         contentDiv.appendChild(spellDiv);
       });
@@ -257,27 +253,31 @@
       // Collapsible toggle
       button.addEventListener('click', function() {
         this.classList.toggle('active');
-        if (contentDiv.style.display === 'block') {
-          contentDiv.style.display = 'none';
-        } else {
-          contentDiv.style.display = 'block';
-        }
+        contentDiv.style.display = (contentDiv.style.display === 'block')
+          ? 'none'
+          : 'block';
       });
     });
   }
 
-  // Open the modal with a layout similar to your screenshot
-  function openSpellModal(spell) {
-    // Fill in the modal fields
+  // Opens the modal with a layout similar to your screenshot
+  function openSpellModal(spell, level) {
+    // Title
     document.getElementById('modal-title').textContent = spell.name || 'Unknown Spell';
 
-    // "Spell 4" (or "Spell X")
-    const levelNum = isCantrip(spell) ? 0 : parseInt(spell.level, 10);
-    document.getElementById('modal-level').textContent = (isNaN(levelNum) ? '' : `Spell ${levelNum}`);
+    // If cantrip, no "Spell 0" line; else "Spell X"
+    let levelText = '';
+    if (!isCantrip(spell)) {
+      const numericLevel = parseInt(spell.level, 10);
+      if (!isNaN(numericLevel)) {
+        levelText = `Spell ${numericLevel}`;
+      }
+    }
+    document.getElementById('modal-level').textContent = levelText;
 
-    // Show traits as colored tags (like Evocation, Fire, etc.)
+    // Trait tags
     const traitsContainer = document.getElementById('modal-traits');
-    traitsContainer.innerHTML = '';
+    traitsContainer.innerHTML = ''; // clear previous
     (spell.traits || []).forEach(trait => {
       const tag = document.createElement('span');
       tag.classList.add('trait-tag');
@@ -286,14 +286,12 @@
     });
 
     // Traditions
-    document.getElementById('modal-traditions').textContent = (spell.traditions || []).join(', ');
+    document.getElementById('modal-traditions').textContent =
+      (spell.traditions || []).join(', ');
 
-    // Cast
-    // Some spells may have an "action", "cast" field, or "components" array:
-    // For demonstration, we'll combine them
+    // Cast (combine action, cast, components)
     let castString = '';
     if (spell.action) {
-      // e.g. "2" for 2 actions
       castString += `Actions: ${spell.action} `;
     }
     if (spell.cast) {
@@ -302,13 +300,16 @@
     if (spell.components) {
       castString += `; Components: ${spell.components.join(', ')}`;
     }
-    document.getElementById('modal-cast').textContent = castString.trim();
+    document.getElementById('modal-cast').textContent = castString.replace(/^;\s*/, '');
 
     // Range
     document.getElementById('modal-range').textContent = spell.range || '(No range specified)';
 
-    // Description
-    document.getElementById('modal-description').textContent = spell.description || '(No description)';
+    // Description: parse out **...** → new line + bold
+    let desc = spell.description || '(No description)';
+    desc = desc.replace(/\*\*(.*?)\*\*/g, '<br><strong>$1</strong><br>');
+    // Finally set as innerHTML so the <strong> etc. render
+    document.getElementById('modal-description').innerHTML = desc;
 
     // Show the modal
     document.getElementById('spell-modal').style.display = 'block';
@@ -322,7 +323,7 @@
   // Attach close event
   document.getElementById('close-modal').addEventListener('click', closeModal);
 
-  // Also close modal if user clicks outside the modal content
+  // Also close if user clicks outside modal content
   window.addEventListener('click', function(event) {
     const modal = document.getElementById('spell-modal');
     if (event.target === modal) {
@@ -330,6 +331,5 @@
     }
   });
 </script>
-
 </body>
 </html>
