@@ -66,17 +66,24 @@
             try {
                 const response = await fetch('spells.json');
                 const spells = await response.json();
-                
-                // Apply JMESPath filtering
-                const query = "[?contains(traits, 'Oracle') && contains(traits, 'Divine') && (`level`=='cantrip' || `level`=='1' || `level`=='2')]";
-                spellsData = jmespath.search(spells, query);
-                
+        
+                // Normalize traits to lowercase and ensure traits array exists
+                spellsData = spells.filter(spell => {
+                    if (!spell.traits || !Array.isArray(spell.traits)) return false;
+        
+                    const traits = spell.traits.map(t => t.trim().toLowerCase()); // Trim spaces and normalize case
+        
+                    return traits.includes("oracle") && traits.includes("divine") &&
+                           ["cantrip", "1", "2", 1, 2].includes(spell.level);
+                });
+        
                 displayCounts();
                 displaySpells(spellsData);
             } catch (error) {
                 console.error("Error loading spells:", error);
             }
         }
+
 
         function displayCounts() {
             const counts = { cantrip: 0, level1: 0, level2: 0 };
