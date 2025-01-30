@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>PF2e Spells with Action Circles (No Components)</title>
+  <title>PF2e Oracle/Divine Spells (No Components, Action Circles)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -13,6 +13,8 @@
       text-align: center;
       margin-bottom: 1em;
     }
+
+    /* Collapsible styling */
     .collapsible {
       background-color: #eee;
       color: #444;
@@ -39,6 +41,8 @@
       margin-bottom: 10px;
       padding: 0 18px;
     }
+
+    /* Spell items */
     .spell-item {
       border-bottom: 1px solid #ddd;
       padding: 10px 0;
@@ -54,12 +58,13 @@
       font-style: italic;
       color: #888;
     }
-    /* The modal overlay */
+
+    /* Modal overlay */
     .modal {
       display: none;
       position: fixed;
       z-index: 9999;
-      left: 0;
+      left: 0; 
       top: 0;
       width: 100%;
       height: 100%;
@@ -87,7 +92,7 @@
       color: #999;
     }
 
-    /* Action circle styling (same as before) */
+    /* Action circle styling */
     .action-circle {
       display: inline-block;
       width: 1.3em;
@@ -102,7 +107,7 @@
       margin: 0 4px;
     }
 
-    /* Tag styling and other modal fields */
+    /* Modal field styling */
     #modal-title {
       margin-top: 0;
     }
@@ -130,13 +135,16 @@
 </head>
 <body>
 
-<h1>Oracle &amp; Divine Spells (No Components in Cast)</h1>
+<h1>Oracle &amp; Divine Spells</h1>
 
+<!-- Collapsible container -->
 <div id="spell-container"></div>
 
+<!-- Modal -->
 <div id="spell-modal" class="modal">
   <div class="modal-content">
     <span id="close-modal" class="close-modal">&times;</span>
+
     <h2 id="modal-title"></h2>
     <div id="modal-level"></div>
     <div class="trait-tags" id="modal-traits"></div>
@@ -156,95 +164,188 @@
 </div>
 
 <script>
-  // Example code to fetch, filter, group, etc. 
-  // (Fill in as needed, this snippet focuses on the openSpellModal function changes)
+/**
+ * 1) Fetch the JSON from your GitHub
+ * 2) Filter for spells with 'divine' or 'oracle'
+ * 3) Group them by level (0 for cantrips)
+ * 4) Render collapsibles
+ * 5) On click, open the modal with no "Components" 
+ *    and numeric actions replaced by circles.
+ */
+fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/refs/heads/main/spells.json')
+  .then(res => res.json())
+  .then(spellsData => {
+    console.log("Fetched spells:", spellsData.length, "total spells.");
+    const filteredSpells = filterSpells(spellsData);
+    console.log("Filtered spells:", filteredSpells.length);
+    const grouped = groupByLevel(filteredSpells);
+    renderCollapsibles(grouped);
+  })
+  .catch(err => console.error("Error fetching spells:", err));
 
-  // A helper to replace the numeric action count with a "circle"
-  function buildActionIcons(actionStr) {
-    // E.g. "2" → <span class="action-circle">2</span>
-    // If there's a range like "2-3", you might want to parse each digit
-    return actionStr.replace(/\d+/g, (match) => {
-      return `<span class="action-circle">${match}</span>`;
-    });
-  }
+/* ------------- FILTER ------------- */
+function filterSpells(spells) {
+  return spells.filter(spell => {
+    const traditions = (spell.traditions || []).map(t => t.toLowerCase());
+    const traits = (spell.traits || []).map(t => t.toLowerCase());
+    const combined = [...traditions, ...traits];
+    return combined.includes("divine") || combined.includes("oracle");
+  });
+}
 
-  // Suppose you have a function openSpellModal(spell) that’s called when a spell is clicked:
-  function openSpellModal(spell) {
-    // Title
-    document.getElementById('modal-title').textContent = spell.name || 'Unknown Spell';
-
-    // Level text (omit if cantrip)
-    let lvlTxt = '';
+/* ------------- GROUP BY LEVEL ------------- */
+function groupByLevel(spells) {
+  const groups = {};
+  spells.forEach(spell => {
+    let levelNum = 0; // default to 0 if cantrip
     if (!isCantrip(spell)) {
-      const lvlParsed = parseInt(spell.level, 10);
-      if (!isNaN(lvlParsed)) lvlTxt = `Spell ${lvlParsed}`;
+      const parsed = parseInt(spell.level, 10);
+      if (!isNaN(parsed)) {
+        levelNum = parsed;
+      } else {
+        levelNum = -1; // fallback
+      }
     }
-    document.getElementById('modal-level').textContent = lvlTxt;
+    if (!groups[levelNum]) {
+      groups[levelNum] = [];
+    }
+    groups[levelNum].push(spell);
+  });
+  return groups;
+}
 
-    // Traits
-    const traitsContainer = document.getElementById('modal-traits');
-    traitsContainer.innerHTML = '';
-    (spell.traits || []).forEach(trait => {
-      const tag = document.createElement('span');
-      tag.classList.add('trait-tag');
-      tag.textContent = trait;
-      traitsContainer.appendChild(tag);
+/* ------------- DETECT CANTRIP ------------- */
+function isCantrip(spell) {
+  const traitsLower = (spell.traits || []).map(t => t.toLowerCase());
+  const typeLower = (spell.type || '').toLowerCase();
+  return traitsLower.includes('cantrip') || typeLower === 'cantrip';
+}
+
+/* ------------- RENDER COLLAPSIBLES ------------- */
+function renderCollapsibles(groupedSpells) {
+  const container = document.getElementById('spell-container');
+  const sortedLevels = Object.keys(groupedSpells)
+    .map(Number)
+    .sort((a, b) => a - b);
+
+  sortedLevels.forEach(level => {
+    // Create the collapsible button
+    const button = document.createElement('button');
+    button.classList.add('collapsible');
+    button.textContent = (level === 0 ? 'Cantrips' : `Level ${level}`);
+
+    // Collapsible content
+    const contentDiv = document.createElement('div');
+    contentDiv.classList.add('collapsible-content');
+
+    // Fill with spells of this level
+    groupedSpells[level].forEach(spell => {
+      const spellDiv = document.createElement('div');
+      spellDiv.classList.add('spell-item');
+
+      const nameEl = document.createElement('div');
+      nameEl.classList.add('spell-name');
+      nameEl.textContent = spell.name || '(No Name)';
+
+      const traitsEl = document.createElement('div');
+      traitsEl.classList.add('spell-traits');
+      traitsEl.textContent = `Traits: ${(spell.traits || []).join(', ')}`;
+
+      spellDiv.appendChild(nameEl);
+      spellDiv.appendChild(traitsEl);
+
+      // On click -> open modal
+      spellDiv.addEventListener('click', () => openSpellModal(spell));
+
+      contentDiv.appendChild(spellDiv);
     });
 
-    // Traditions
-    document.getElementById('modal-traditions').textContent =
-      (spell.traditions || []).join(', ');
+    button.addEventListener('click', function() {
+      this.classList.toggle('active');
+      contentDiv.style.display = (contentDiv.style.display === 'block' ? 'none' : 'block');
+    });
 
-    // Build the "Cast" line (no components, no semicolons)
-    let castString = '';
-    if (spell.action) {
-      // "Actions: <circle>2</circle>" for example
-      castString += 'Actions: ' + buildActionIcons(spell.action);
-    }
-    // If there's a separate "cast" field (like "somatic, verbal"), just add it with a space
-    if (spell.cast) {
-      // e.g. "somatic, verbal"
-      // Add a space between them
-      castString += (castString ? ' ' : '') + spell.cast;
-    }
-
-    document.getElementById('modal-cast').innerHTML = castString || '(No action info)';
-
-    // Range
-    document.getElementById('modal-range').textContent = spell.range || '(No range specified)';
-
-    // Description transformations
-    let desc = spell.description || '(No description)';
-    // Bold for **...**
-    desc = desc.replace(/\*\*(.*?)\*\*/g, '<br><strong>$1</strong><br>');
-    // Action circles in the text
-    desc = desc.replace(/\|(\d+)\|/g, '<span class="action-circle">$1</span>');
-    document.getElementById('modal-description').innerHTML = desc;
-
-    // Show modal
-    document.getElementById('spell-modal').style.display = 'block';
-  }
-
-  // Helper for cantrip check (unchanged from earlier examples)
-  function isCantrip(spell) {
-    const traitsLower = (spell.traits || []).map(t => t.toLowerCase());
-    const typeLower = (spell.type || '').toLowerCase();
-    return traitsLower.includes('cantrip') || typeLower === 'cantrip';
-  }
-
-  // Close modal
-  document.getElementById('close-modal').addEventListener('click', () => {
-    document.getElementById('spell-modal').style.display = 'none';
+    container.appendChild(button);
+    container.appendChild(contentDiv);
   });
-  window.addEventListener('click', e => {
-    const modal = document.getElementById('spell-modal');
-    if (e.target === modal) {
-      modal.style.display = 'none';
+}
+
+/* ------------- BUILD ACTION ICONS ------------- */
+function buildActionIcons(actionStr) {
+  // Replace every integer with <span class="action-circle">N</span>
+  return actionStr.replace(/\d+/g, match => {
+    return `<span class="action-circle">${match}</span>`;
+  });
+}
+
+/* ------------- OPEN SPELL MODAL ------------- */
+function openSpellModal(spell) {
+  // Title
+  document.getElementById('modal-title').textContent = spell.name || 'Unknown Spell';
+
+  // Spell Level (omit if cantrip)
+  let lvlTxt = '';
+  if (!isCantrip(spell)) {
+    const lvlParsed = parseInt(spell.level, 10);
+    if (!isNaN(lvlParsed)) {
+      lvlTxt = `Spell ${lvlParsed}`;
     }
+  }
+  document.getElementById('modal-level').textContent = lvlTxt;
+
+  // Traits as tags
+  const traitsContainer = document.getElementById('modal-traits');
+  traitsContainer.innerHTML = '';
+  (spell.traits || []).forEach(trait => {
+    const tag = document.createElement('span');
+    tag.classList.add('trait-tag');
+    tag.textContent = trait;
+    traitsContainer.appendChild(tag);
   });
 
-  // ...plus your existing code for fetch -> filter -> group -> render, 
-  // hooking openSpellModal(spell) on click, etc.
+  // Traditions
+  document.getElementById('modal-traditions').textContent = 
+    (spell.traditions || []).join(', ');
+
+  // Cast line: no components, no semicolons
+  // E.g. "Actions: <circle>2</circle> somatic, verbal"
+  let castString = '';
+  if (spell.action) {
+    // e.g. "Actions: <circle>2</circle>"
+    castString += 'Actions: ' + buildActionIcons(spell.action);
+  }
+  // If there's a "cast" field (like "somatic, verbal"), add it with a space
+  if (spell.cast) {
+    castString += (castString ? ' ' : '') + spell.cast;
+  }
+  document.getElementById('modal-cast').innerHTML = castString || '(No action info)';
+
+  // Range
+  document.getElementById('modal-range').textContent = spell.range || '(No range specified)';
+
+  // Description: 
+  // 1) Bold for **...**
+  // 2) Numbered circle for |n|
+  let desc = spell.description || '(No description)';
+  desc = desc.replace(/\*\*(.*?)\*\*/g, '<br><strong>$1</strong><br>');
+  desc = desc.replace(/\|(\d+)\|/g, '<span class="action-circle">$1</span>');
+  document.getElementById('modal-description').innerHTML = desc;
+
+  // Show modal
+  document.getElementById('spell-modal').style.display = 'block';
+}
+
+/* ------------- CLOSE MODAL ------------- */
+document.getElementById('close-modal').addEventListener('click', () => {
+  document.getElementById('spell-modal').style.display = 'none';
+});
+window.addEventListener('click', (e) => {
+  const modal = document.getElementById('spell-modal');
+  if (e.target === modal) {
+    modal.style.display = 'none';
+  }
+});
 </script>
+
 </body>
 </html>
