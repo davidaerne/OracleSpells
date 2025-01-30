@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>PF2e Oracle/Divine Spells (Multi-Action Support)</title>
+  <title>PF2e Oracle/Divine Spells (3 Enhancements)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -64,7 +64,7 @@
       display: none;
       position: fixed;
       z-index: 9999;
-      left: 0; 
+      left: 0;
       top: 0;
       width: 100%;
       height: 100%;
@@ -135,7 +135,7 @@
 </head>
 <body>
 
-<h1>Oracle &amp; Divine Spells (Multiple Actions)</h1>
+<h1>Oracle &amp; Divine Spells (3 Enhancements)</h1>
 
 <!-- Collapsible container -->
 <div id="spell-container"></div>
@@ -165,11 +165,12 @@
 
 <script>
 /**
- * 1) Fetch the JSON from your GitHub
+ * 1) Fetch the JSON from GitHub
  * 2) Filter for spells with 'divine' or 'oracle'
  * 3) Group them by level (0 for cantrips)
- * 4) Render collapsibles
- * 5) On click, open the modal with multiple action support
+ * 4) Sort spells by name within each level
+ * 5) Render collapsibles (only one open at a time)
+ * 6) On click, open the modal with multi-action support and no trailing "to"
  */
 fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/refs/heads/main/spells.json')
   .then(res => res.json())
@@ -221,6 +222,9 @@ function isCantrip(spell) {
 }
 
 /* ------------- RENDER COLLAPSIBLES ------------- */
+// We'll allow only one level to be open at a time.
+let currentlyOpen = null; // track which content is open
+
 function renderCollapsibles(groupedSpells) {
   const container = document.getElementById('spell-container');
   const sortedLevels = Object.keys(groupedSpells)
@@ -228,6 +232,11 @@ function renderCollapsibles(groupedSpells) {
     .sort((a, b) => a - b);
 
   sortedLevels.forEach(level => {
+    const spellsAtLevel = groupedSpells[level];
+
+    // 4) Alphabetize the spells by name
+    spellsAtLevel.sort((a, b) => a.name.localeCompare(b.name));
+
     // Create the collapsible button
     const button = document.createElement('button');
     button.classList.add('collapsible');
@@ -238,7 +247,7 @@ function renderCollapsibles(groupedSpells) {
     contentDiv.classList.add('collapsible-content');
 
     // Fill with spells of this level
-    groupedSpells[level].forEach(spell => {
+    spellsAtLevel.forEach(spell => {
       const spellDiv = document.createElement('div');
       spellDiv.classList.add('spell-item');
 
@@ -259,9 +268,20 @@ function renderCollapsibles(groupedSpells) {
       contentDiv.appendChild(spellDiv);
     });
 
+    // Click to collapse/expand
     button.addEventListener('click', function() {
-      this.classList.toggle('active');
-      contentDiv.style.display = (contentDiv.style.display === 'block' ? 'none' : 'block');
+      // 5) When clicking a new level, close previously open one
+      if (currentlyOpen && currentlyOpen !== contentDiv) {
+        currentlyOpen.style.display = 'none';
+      }
+      // Toggle the new one
+      if (contentDiv.style.display === 'block') {
+        contentDiv.style.display = 'none';
+        currentlyOpen = null;
+      } else {
+        contentDiv.style.display = 'block';
+        currentlyOpen = contentDiv;
+      }
     });
 
     container.appendChild(button);
@@ -307,22 +327,21 @@ function openSpellModal(spell) {
     (spell.traditions || []).join(', ');
 
   /**
-   * Cast line: no components, no semicolons
-   * If "actionMax" is set, show "Actions: <circle>n</circle> to <circle>n</circle>"
-   * Otherwise just "Actions: <circle>n</circle>"
+   * Build the Cast line (no components, no semicolons).
+   * If actionMax is set, show "Actions: (circle)N to (circle)M"
+   * Otherwise just "Actions: (circle)N"
    */
   let castString = '';
   if (spell.action) {
-    // Example: "action" = "1", "actionMax" = "3"
+    // If "actionMax" also exists, show "to"
     if (spell.actionMax) {
-      // e.g. "Actions: (circle)1 to (circle)3"
       castString += 'Actions: ' + buildActionIcons(spell.action) + ' to ' + buildActionIcons(spell.actionMax);
     } else {
-      // Single action only
+      // Just a single action
       castString += 'Actions: ' + buildActionIcons(spell.action);
     }
   }
-  // If there's a "cast" field (like "somatic, verbal"), add it
+  // If there's a "cast" field, add it with a space
   if (spell.cast) {
     castString += (castString ? ' ' : '') + spell.cast;
   }
