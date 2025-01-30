@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>PF2e Oracle/Divine Spells (3 Enhancements)</title>
+  <title>PF2e Oracle/Divine Spells (Skip Cast="to")</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -64,7 +64,7 @@
       display: none;
       position: fixed;
       z-index: 9999;
-      left: 0;
+      left: 0; 
       top: 0;
       width: 100%;
       height: 100%;
@@ -135,7 +135,7 @@
 </head>
 <body>
 
-<h1>Oracle &amp; Divine Spells (3 Enhancements)</h1>
+<h1>Oracle &amp; Divine Spells</h1>
 
 <!-- Collapsible container -->
 <div id="spell-container"></div>
@@ -164,26 +164,17 @@
 </div>
 
 <script>
-/**
- * 1) Fetch the JSON from GitHub
- * 2) Filter for spells with 'divine' or 'oracle'
- * 3) Group them by level (0 for cantrips)
- * 4) Sort spells by name within each level
- * 5) Render collapsibles (only one open at a time)
- * 6) On click, open the modal with multi-action support and no trailing "to"
- */
+// 1) Fetch
 fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/refs/heads/main/spells.json')
   .then(res => res.json())
   .then(spellsData => {
-    console.log("Fetched spells:", spellsData.length, "total spells.");
     const filteredSpells = filterSpells(spellsData);
-    console.log("Filtered spells:", filteredSpells.length);
     const grouped = groupByLevel(filteredSpells);
     renderCollapsibles(grouped);
   })
-  .catch(err => console.error("Error fetching spells:", err));
+  .catch(err => console.error("Error:", err));
 
-/* ------------- FILTER ------------- */
+// Filter for 'divine' or 'oracle'
 function filterSpells(spells) {
   return spells.filter(spell => {
     const traditions = (spell.traditions || []).map(t => t.toLowerCase());
@@ -193,38 +184,29 @@ function filterSpells(spells) {
   });
 }
 
-/* ------------- GROUP BY LEVEL ------------- */
+// Group by level (0 if cantrip)
 function groupByLevel(spells) {
   const groups = {};
   spells.forEach(spell => {
-    let levelNum = 0; // default to 0 if cantrip
+    let levelNum = 0;
     if (!isCantrip(spell)) {
       const parsed = parseInt(spell.level, 10);
-      if (!isNaN(parsed)) {
-        levelNum = parsed;
-      } else {
-        levelNum = -1; // fallback
-      }
+      if (!isNaN(parsed)) levelNum = parsed;
+      else levelNum = -1;
     }
-    if (!groups[levelNum]) {
-      groups[levelNum] = [];
-    }
+    if (!groups[levelNum]) groups[levelNum] = [];
     groups[levelNum].push(spell);
   });
   return groups;
 }
 
-/* ------------- DETECT CANTRIP ------------- */
 function isCantrip(spell) {
-  const traitsLower = (spell.traits || []).map(t => t.toLowerCase());
-  const typeLower = (spell.type || '').toLowerCase();
-  return traitsLower.includes('cantrip') || typeLower === 'cantrip';
+  const t = (spell.traits || []).map(x => x.toLowerCase());
+  const ty = (spell.type || '').toLowerCase();
+  return t.includes('cantrip') || ty === 'cantrip';
 }
 
-/* ------------- RENDER COLLAPSIBLES ------------- */
-// We'll allow only one level to be open at a time.
-let currentlyOpen = null; // track which content is open
-
+let currentlyOpen = null; // track open content
 function renderCollapsibles(groupedSpells) {
   const container = document.getElementById('spell-container');
   const sortedLevels = Object.keys(groupedSpells)
@@ -233,48 +215,43 @@ function renderCollapsibles(groupedSpells) {
 
   sortedLevels.forEach(level => {
     const spellsAtLevel = groupedSpells[level];
+    // sort alpha by name
+    spellsAtLevel.sort((a,b) => a.name.localeCompare(b.name));
 
-    // 4) Alphabetize the spells by name
-    spellsAtLevel.sort((a, b) => a.name.localeCompare(b.name));
-
-    // Create the collapsible button
+    // button
     const button = document.createElement('button');
     button.classList.add('collapsible');
     button.textContent = (level === 0 ? 'Cantrips' : `Level ${level}`);
 
-    // Collapsible content
+    // content
     const contentDiv = document.createElement('div');
     contentDiv.classList.add('collapsible-content');
 
-    // Fill with spells of this level
     spellsAtLevel.forEach(spell => {
       const spellDiv = document.createElement('div');
       spellDiv.classList.add('spell-item');
 
       const nameEl = document.createElement('div');
       nameEl.classList.add('spell-name');
-      nameEl.textContent = spell.name || '(No Name)';
+      nameEl.textContent = spell.name;
 
       const traitsEl = document.createElement('div');
       traitsEl.classList.add('spell-traits');
-      traitsEl.textContent = `Traits: ${(spell.traits || []).join(', ')}`;
+      traitsEl.textContent = `Traits: ${ (spell.traits||[]).join(', ') }`;
 
       spellDiv.appendChild(nameEl);
       spellDiv.appendChild(traitsEl);
 
-      // On click -> open modal
+      // open modal
       spellDiv.addEventListener('click', () => openSpellModal(spell));
-
       contentDiv.appendChild(spellDiv);
     });
 
-    // Click to collapse/expand
+    // only one open at a time
     button.addEventListener('click', function() {
-      // 5) When clicking a new level, close previously open one
       if (currentlyOpen && currentlyOpen !== contentDiv) {
         currentlyOpen.style.display = 'none';
       }
-      // Toggle the new one
       if (contentDiv.style.display === 'block') {
         contentDiv.style.display = 'none';
         currentlyOpen = null;
@@ -289,91 +266,76 @@ function renderCollapsibles(groupedSpells) {
   });
 }
 
-/* ------------- BUILD ACTION ICONS ------------- */
-function buildActionIcons(actionStr) {
-  // Replace every integer with <span class="action-circle">N</span>
-  return actionStr.replace(/\d+/g, match => {
-    return `<span class="action-circle">${match}</span>`;
-  });
+// Replaces digits with action-circle
+function buildActionIcons(str) {
+  return str.replace(/\d+/g, m => `<span class="action-circle">${m}</span>`);
 }
 
-/* ------------- OPEN SPELL MODAL ------------- */
+// openSpellModal
 function openSpellModal(spell) {
-  // Title
   document.getElementById('modal-title').textContent = spell.name || 'Unknown Spell';
 
-  // Spell Level (omit if cantrip)
   let lvlTxt = '';
   if (!isCantrip(spell)) {
-    const lvlParsed = parseInt(spell.level, 10);
-    if (!isNaN(lvlParsed)) {
-      lvlTxt = `Spell ${lvlParsed}`;
-    }
+    const p = parseInt(spell.level,10);
+    if (!isNaN(p)) lvlTxt = `Spell ${p}`;
   }
   document.getElementById('modal-level').textContent = lvlTxt;
 
-  // Traits as tags
-  const traitsContainer = document.getElementById('modal-traits');
-  traitsContainer.innerHTML = '';
-  (spell.traits || []).forEach(trait => {
+  // traits
+  const traitsDiv = document.getElementById('modal-traits');
+  traitsDiv.innerHTML = '';
+  (spell.traits || []).forEach(tr => {
     const tag = document.createElement('span');
     tag.classList.add('trait-tag');
-    tag.textContent = trait;
-    traitsContainer.appendChild(tag);
+    tag.textContent = tr;
+    traitsDiv.appendChild(tag);
   });
 
-  // Traditions
   document.getElementById('modal-traditions').textContent =
     (spell.traditions || []).join(', ');
 
-  /**
-   * Build the Cast line (no components, no semicolons).
-   * If actionMax is set, show "Actions: (circle)N to (circle)M"
-   * Otherwise just "Actions: (circle)N"
-   */
+  // Build the cast line
   let castString = '';
   if (spell.action) {
-    // If "actionMax" also exists, show "to"
+    // if there's actionMax
     if (spell.actionMax) {
-      castString += 'Actions: ' + buildActionIcons(spell.action) + ' to ' + buildActionIcons(spell.actionMax);
+      castString += 'Actions: ' + buildActionIcons(spell.action) 
+        + ' to ' 
+        + buildActionIcons(spell.actionMax);
     } else {
-      // Just a single action
       castString += 'Actions: ' + buildActionIcons(spell.action);
     }
   }
-  // If there's a "cast" field, add it with a space
-  if (spell.cast) {
+  // only add spell.cast if it's not literally "to"
+  if (spell.cast && spell.cast.toLowerCase() !== 'to') {
     castString += (castString ? ' ' : '') + spell.cast;
   }
+
   document.getElementById('modal-cast').innerHTML = castString || '(No action info)';
 
-  // Range
   document.getElementById('modal-range').textContent = spell.range || '(No range specified)';
 
-  // Description: 
-  // 1) Bold for **...**
-  // 2) Numbered circle for |n|
-  // 3) Put each |n| on a new line
+  // description
   let desc = spell.description || '(No description)';
   desc = desc.replace(/\*\*(.*?)\*\*/g, '<br><strong>$1</strong><br>');
   desc = desc.replace(/\|(\d+)\|\s*/g, '<br><span class="action-circle">$1</span> ');
-
   document.getElementById('modal-description').innerHTML = desc;
 
-  // Show modal
+  // show
   document.getElementById('spell-modal').style.display = 'block';
 }
 
-/* ------------- CLOSE MODAL ------------- */
+// close
 document.getElementById('close-modal').addEventListener('click', () => {
   document.getElementById('spell-modal').style.display = 'none';
 });
-window.addEventListener('click', (e) => {
-  const modal = document.getElementById('spell-modal');
-  if (e.target === modal) {
-    modal.style.display = 'none';
+window.addEventListener('click', e => {
+  if(e.target === document.getElementById('spell-modal')){
+    document.getElementById('spell-modal').style.display='none';
   }
 });
 </script>
+
 </body>
 </html>
