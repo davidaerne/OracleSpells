@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>PF2e Oracle/Divine Spells (Actions on New Lines)</title>
+  <title>PF2e Oracle/Divine Spells (Multi-Action Support)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -64,7 +64,7 @@
       display: none;
       position: fixed;
       z-index: 9999;
-      left: 0;
+      left: 0; 
       top: 0;
       width: 100%;
       height: 100%;
@@ -135,7 +135,7 @@
 </head>
 <body>
 
-<h1>Oracle &amp; Divine Spells</h1>
+<h1>Oracle &amp; Divine Spells (Multiple Actions)</h1>
 
 <!-- Collapsible container -->
 <div id="spell-container"></div>
@@ -169,7 +169,7 @@
  * 2) Filter for spells with 'divine' or 'oracle'
  * 3) Group them by level (0 for cantrips)
  * 4) Render collapsibles
- * 5) On click, open the modal
+ * 5) On click, open the modal with multiple action support
  */
 fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/refs/heads/main/spells.json')
   .then(res => res.json())
@@ -306,12 +306,23 @@ function openSpellModal(spell) {
   document.getElementById('modal-traditions').textContent =
     (spell.traditions || []).join(', ');
 
-  // Cast line: no components, no semicolons
+  /**
+   * Cast line: no components, no semicolons
+   * If "actionMax" is set, show "Actions: <circle>n</circle> to <circle>n</circle>"
+   * Otherwise just "Actions: <circle>n</circle>"
+   */
   let castString = '';
   if (spell.action) {
-    // "Actions: <circle>N</circle>"
-    castString += 'Actions: ' + buildActionIcons(spell.action);
+    // Example: "action" = "1", "actionMax" = "3"
+    if (spell.actionMax) {
+      // e.g. "Actions: (circle)1 to (circle)3"
+      castString += 'Actions: ' + buildActionIcons(spell.action) + ' to ' + buildActionIcons(spell.actionMax);
+    } else {
+      // Single action only
+      castString += 'Actions: ' + buildActionIcons(spell.action);
+    }
   }
+  // If there's a "cast" field (like "somatic, verbal"), add it
   if (spell.cast) {
     castString += (castString ? ' ' : '') + spell.cast;
   }
@@ -320,15 +331,12 @@ function openSpellModal(spell) {
   // Range
   document.getElementById('modal-range').textContent = spell.range || '(No range specified)';
 
-  // Description:
+  // Description: 
   // 1) Bold for **...**
-  // 2) Action circles for |n|
-  // 3) Put each |n| on its own line
+  // 2) Numbered circle for |n|
+  // 3) Put each |n| on a new line
   let desc = spell.description || '(No description)';
-  // Make **text** bold on new lines
   desc = desc.replace(/\*\*(.*?)\*\*/g, '<br><strong>$1</strong><br>');
-  // Put each action on a new line + circle
-  // e.g. "|1| Something..." -> "<br><span class='action-circle'>1</span> Something..."
   desc = desc.replace(/\|(\d+)\|\s*/g, '<br><span class="action-circle">$1</span> ');
 
   document.getElementById('modal-description').innerHTML = desc;
@@ -348,6 +356,5 @@ window.addEventListener('click', (e) => {
   }
 });
 </script>
-
 </body>
 </html>
