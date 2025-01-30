@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mobile Filter Demo</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    header {
+      background-color: #fafafa;
+      border-bottom: 1px solid #ddd;
+      padding: 1rem;
+      position: relative;
+    }
+    .filter-toggle {
+      background-color: #007aff;
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1rem;
+      font-size: 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .filter-panel {
+      background-color: #fff;
+      border-bottom: 1px solid #ddd;
+      padding: 0.5rem 1rem;
+      display: none; /* hidden by default */
+    }
+    .filter-panel.active {
+      display: block;
+    }
+    .filter-row {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 1rem;
+    }
+    .filter-row label {
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+    .filter-row select,
+    .filter-row input {
+      padding: 0.5rem;
+      font-size: 1rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    .actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .action-btn {
+      flex: 1;
+      padding: 0.6rem 0.8rem;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    .action-btn.apply {
+      background-color: #007aff;
+      color: #fff;
+    }
+    .action-btn.reset {
+      background-color: #eee;
+      color: #333;
+    }
+
+    /* For demonstration, add some content below */
+    main {
+      padding: 1rem;
+    }
+
+    /* Basic responsive: keep filter always shown at larger widths */
+    @media (min-width: 768px) {
+      .filter-toggle {
+        display: none; /* hide toggle button on larger screens */
+      }
+      .filter-panel {
+        display: block; /* always show at larger screens */
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <!-- Filter toggle button for mobile -->
+    <button class="filter-toggle" onclick="toggleFilterPanel()">Filter</button>
+  </header>
+
+  <!-- Collapsible filter panel -->
+  <div id="filterPanel" class="filter-panel">
+    <!-- Search Row -->
+    <div class="filter-row">
+      <label for="searchInput">Search</label>
+      <input id="searchInput" type="text" placeholder="Name or Trait" />
+    </div>
+
+    <!-- Type Row -->
+    <div class="filter-row">
+      <label for="typeSelect">Type</label>
+      <select id="typeSelect">
+        <option value="All">All</option>
+        <option value="Animals">Animals</option>
+        <option value="Plants">Plants</option>
+      </select>
+    </div>
+
+    <!-- Sort By Row -->
+    <div class="filter-row">
+      <label for="sortSelect">Sort By</label>
+      <select id="sortSelect">
+        <option value="Level">Level</option>
+        <option value="Name">Name</option>
+      </select>
+    </div>
+
+    <!-- Action Count Row -->
+    <div class="filter-row">
+      <label for="actionCountSelect">Action Count</label>
+      <select id="actionCountSelect">
+        <option value="Any">Any</option>
+        <option value="1">1+</option>
+        <option value="5">5+</option>
+      </select>
+    </div>
+
+    <!-- Buttons Row -->
+    <div class="actions">
+      <button class="action-btn apply">Apply</button>
+      <button class="action-btn reset">Reset</button>
+    </div>
+  </div>
+
+  <main>
+    <h2>Mobile Filter Demo</h2>
+    <p>Content goes here...</p>
+  </main>
+
+  <script>
+    function toggleFilterPanel() {
+      const panel = document.getElementById('filterPanel');
+      panel.classList.toggle('active');
+    }
+  </script>
+</body>
+</html>
