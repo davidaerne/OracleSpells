@@ -1,112 +1,112 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    color: #333;
-    margin: 0;
-    padding: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  color: #333;
+  margin: 0;
+  padding: 0;
 }
 
 header {
-    background: #B71C1C;
-    color: white;
-    padding: 1rem 0;
-    text-align: center;
+  background: #B71C1C;
+  color: white;
+  padding: 1rem 0;
+  text-align: center;
 }
 
 .container {
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 20px;
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .filter-section,
 .spell-list,
 .tabs {
-    margin-bottom: 20px;
+  margin-bottom: 20px;
 }
 
 .filter-section select,
 .spell-list button,
 .filter-section input {
-    margin: 5px;
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
+  margin: 5px;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
 }
 
 .spell-list ul {
-    list-style: none;
-    padding: 0;
+  list-style: none;
+  padding: 0;
 }
 
 .spell-item {
-    padding: 10px;
-    margin-bottom: 5px;
-    background: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 5px;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 5px;
 }
 
 .spell-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
 }
 
 .spell-details {
-    display: none;
-    padding: 10px;
-    margin-top: 5px;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+  display: none;
+  padding: 10px;
+  margin-top: 5px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 5px;
 }
 
 .spell-details.active {
-    display: block;
+  display: block;
 }
 
 .spell-name {
-    font-weight: bold;
+  font-weight: bold;
 }
 
 .spell-type {
-    font-size: 0.9em;
-    color: #555;
+  font-size: 0.9em;
+  color: #555;
 }
 
 .tabs {
-    display: flex;
-    border-bottom: 2px solid #ddd;
+  display: flex;
+  border-bottom: 2px solid #ddd;
 }
 
 .tab {
-    padding: 10px 20px;
-    cursor: pointer;
-    border: 1px solid #ddd;
-    border-bottom: none;
-    background: #f9f9f9;
-    border-radius: 5px 5px 0 0;
-    margin-right: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  border-bottom: none;
+  background: #f9f9f9;
+  border-radius: 5px 5px 0 0;
+  margin-right: 10px;
 }
 
 .tab.active {
-    background: #B71C1C;
-    color: white;
+  background: #B71C1C;
+  color: white;
 }
 
 .tab-content {
-    display: none;
-    padding: 20px;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 0 0 10px 10px;
+  display: none;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 0 0 10px 10px;
 }
 
 .tab-content.active {
-    display: block;
+  display: block;
 }
