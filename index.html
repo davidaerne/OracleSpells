@@ -3,70 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Oracle Spell Selector</title>
-  <!-- Link to external CSS -->
+  <title>Spell Selector (Accordion Style)</title>
+  <!-- Link external stylesheet -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+
   <header>
     <h1>Oracle Spell Selector</h1>
   </header>
 
   <div class="container">
-    <!-- Filter Section -->
-    <div class="filter-section">
-      <h2>Filter Spells</h2>
-      <label for="spell-level">Spell Level:</label>
-      <select id="spell-level">
-        <option value="Cantrip">Cantrip</option>
-        <option value="1">Level 1</option>
-        <option value="2">Level 2</option>
-        <option value="3">Level 3</option>
-        <option value="4">Level 4</option>
-        <option value="5">Level 5</option>
-        <option value="6">Level 6</option>
-        <option value="7">Level 7</option>
-        <option value="8">Level 8</option>
-        <option value="9">Level 9</option>
-        <option value="10">Level 10</option>
-      </select>
+    <!-- Accordion of Spells by Level -->
+    <h2>Available Spells</h2>
+    <div id="accordion-container"><!-- Inserted dynamically by script.js --></div>
 
-      <label for="spell-type">Spell Type:</label>
-      <select id="spell-type">
-        <option value="all">All</option>
-        <option value="offensive">Offensive</option>
-        <option value="defensive">Defensive</option>
-      </select>
-
-      <input type="text" id="search-box" placeholder="Search by spell name..." />
-      <button onclick="filterSpells()">Filter</button>
-    </div>
-
-    <!-- Tabs -->
-    <div class="tabs">
-      <div class="tab active" onclick="switchTab(event, 'available-spells')">Available Spells</div>
-      <div class="tab" onclick="switchTab(event, 'selected-spells')">Selected Spells</div>
-      <div class="tab" onclick="switchTab(event, 'all-spells')">All Spells</div>
-    </div>
-
-    <!-- Tab Contents -->
-    <div id="available-spells" class="tab-content active">
-      <h2>Available Spells</h2>
-      <ul id="available-spell-list"></ul>
-    </div>
-
-    <div id="selected-spells" class="tab-content">
-      <h2>Selected Spells</h2>
-      <ul id="selected-spell-list"></ul>
-    </div>
-
-    <div id="all-spells" class="tab-content">
-      <h2>All Spells</h2>
-      <ul id="all-spell-list"></ul>
-    </div>
+    <!-- Selected Spells -->
+    <h2>Selected Spells</h2>
+    <ul id="selected-spell-list"></ul>
   </div>
 
-  <!-- Link to external JavaScript at the bottom -->
+  <!-- Link external JavaScript -->
   <script src="script.js"></script>
 </body>
 </html>
