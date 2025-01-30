@@ -1,202 +1,200 @@
 /******************************************************************************
  * script.js
- *
- * 1. Hard-code the Oracle Spell Slot progression for levels 1–10.
- * 2. When user picks a "class level," display a table row of that many slots
- *    at each spell level (1..10).
- * 3. Each slot is clickable:
- *      - It opens a modal listing all spells of that level.
- *      - Clicking "+" on a spell assigns that spell to the slot, closes the modal.
- * 4. We fetch the entire spells JSON from your GitHub link. We do NOT filter
- *    them by tradition or tags, so you see *all* spells for the chosen level.
+ * 
+ * 1. Fetch all spells (including cantrips).
+ * 2. Build an accordion for "Cantrip" + levels 1..10, each showing all spells of that level.
+ * 3. When you click a spell, a modal shows the details (name, traditions, description, etc.).
+ * 4. A "Add Spell" button in the modal adds it to "Selected Spells."
+ * 5. The "Selected Spells" list is also clickable, so you can re-open a spell’s details if desired.
  *****************************************************************************/
 
-// Oracle slot progression: array index = class level
-// Each element is an array of 10 items representing the # of slots at each spell level 1..10
-// e.g. oracleSlotProgression[5] => [3,3,2,0,0,0,0,0,0,0] => means at class level 5, you have
-//   3 first-level slots, 3 second-level slots, 2 third-level slots, etc.
-const oracleSlotProgression = {
-  1: [2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  2: [3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  3: [3, 2, 0, 0, 0, 0, 0, 0, 0, 0],
-  4: [3, 3, 0, 0, 0, 0, 0, 0, 0, 0],
-  5: [3, 3, 2, 0, 0, 0, 0, 0, 0, 0],
-  6: [3, 3, 3, 0, 0, 0, 0, 0, 0, 0],
-  7: [3, 3, 3, 2, 0, 0, 0, 0, 0, 0],
-  8: [3, 3, 3, 3, 0, 0, 0, 0, 0, 0],
-  9: [3, 3, 3, 3, 2, 0, 0, 0, 0, 0],
-  10: [3, 3, 3, 3, 3, 0, 0, 0, 0, 0]
-};
+let spells = [];           // all spells from JSON
+let selectedSpells = [];   // list of chosen spells
 
-// We'll keep an array that mirrors the # of slots for the *selected* level.
-// For instance, if class level is 5 => [3,3,2,0,0,0,0,0,0,0] => then we store
-// which spell each slot is assigned to. e.g. at "1st-level, slot #1 => Fireball" etc.
-// This is purely for display. If you have 3 slots at 1st level, userSelectedSpells[0] = Array of 3 spells (or null).
-let userSelectedSpells = [];
-
-// We'll store all spells from JSON
-let allSpells = [];
-
-/**
- * On page load, fetch spells from your GitHub JSON
- * Then set up event listeners and initialize table for default class level (1).
- */
 document.addEventListener('DOMContentLoaded', () => {
-  // Fetch all spells
+  // Fetch from your GitHub JSON
   fetch('https://davidaerne.github.io/OracleSpells/spells.json')
     .then(resp => {
       if (!resp.ok) throw new Error('Failed to load spells.json');
       return resp.json();
     })
     .then(data => {
-      allSpells = data; // store all spells
+      spells = data;
+      buildAccordion(); // create the single-column levels
     })
     .catch(err => console.error('Error loading spells:', err));
 
-  // When user changes the class level dropdown, rebuild the table
-  const classLevelSelect = document.getElementById('class-level');
-  classLevelSelect.addEventListener('change', updateSpellSlotsTable);
-
-  // Also close the modal if user clicks the "X"
-  const modalClose = document.getElementById('modal-close');
-  modalClose.addEventListener('click', () => {
-    const modal = document.getElementById('spell-modal');
-    modal.style.display = 'none';
+  // Close modal if user clicks the "X"
+  document.getElementById('modal-close').addEventListener('click', () => {
+    document.getElementById('spell-modal').style.display = 'none';
   });
-
-  // Initialize table for the default value (level 1)
-  updateSpellSlotsTable();
 });
 
 /**
- * Builds the table row(s) for the current class level,
- * based on oracleSlotProgression. Each cell is clickable.
+ * Builds an accordion with sections: "Cantrip," "Level 1," "Level 2," ... "Level 10."
+ * Each section has a list of spells for that level.
  */
-function updateSpellSlotsTable() {
-  const level = parseInt(document.getElementById('class-level').value, 10);
-  const slotsTableBody = document.querySelector('#spell-slots-table tbody');
-  slotsTableBody.innerHTML = ''; // clear existing rows
+function buildAccordion() {
+  const container = document.getElementById('accordion-container');
+  container.innerHTML = '';
 
-  // e.g. for level=5 => [3,3,2,0,0,0,0,0,0,0]
-  const slotArray = oracleSlotProgression[level];
+  // We want "Cantrip" + numeric levels 1..10
+  const allLevels = ['Cantrip', '1','2','3','4','5','6','7','8','9','10'];
 
-  // Reinitialize userSelectedSpells with the correct structure
-  // We'll store an array of arrays, one sub-array per spell level (1..10).
-  // Each sub-array has "slotArray[i]" number of entries, initially null.
-  userSelectedSpells = slotArray.map(slotCount => Array(slotCount).fill(null));
+  allLevels.forEach(levelLabel => {
+    const itemDiv = document.createElement('div');
+    itemDiv.classList.add('accordion-item');
 
-  // We'll display just a *single row* with 10 columns for spell levels 1..10
-  // Each cell will contain sub-slots if slotCount > 0
-  const row = document.createElement('tr');
+    // Accordion Header
+    const headerDiv = document.createElement('div');
+    headerDiv.classList.add('accordion-header');
+    headerDiv.innerHTML = `
+      <span>${levelLabel === 'Cantrip' ? 'Cantrip' : 'Level ' + levelLabel}</span>
+      <span>+</span>
+    `;
 
-  for (let i = 0; i < 10; i++) {
-    const td = document.createElement('td');
-    td.classList.add('slot-cell');
+    // Accordion Content
+    const contentDiv = document.createElement('div');
+    contentDiv.classList.add('accordion-content');
 
-    const slotCount = slotArray[i];
-    if (slotCount === 0) {
-      td.textContent = '-';
-      td.classList.remove('slot-cell');
+    // Filter spells for this level
+    // If "Cantrip," show spells where "spell.level" is 0 or "type" is "Cantrip" or "traits" includes "cantrip".
+    // If numeric, show spells with parseInt(spell.level)== that number
+    let filteredSpells = [];
+    if (levelLabel === 'Cantrip') {
+      filteredSpells = spells.filter(sp => {
+        // Some spells might have "type": "Cantrip" or "traits": ["cantrip"]
+        // or might literally have "level": 0. Adjust logic to your data format.
+        const isTypeCantrip = (typeof sp.type === 'string' && sp.type.toLowerCase() === 'cantrip');
+        const hasCantripTrait = (sp.traits||[]).map(t=>t.toLowerCase()).includes('cantrip');
+        const numericLevel = parseInt(sp.level, 10);
+        return (isTypeCantrip || hasCantripTrait || numericLevel === 0);
+      });
     } else {
-      // Build a small sub-list of each slot
-      // e.g. if slotCount=3, we create three lines: "Slot 1: [empty]" ...
-      let htmlContent = '';
-      for (let s = 0; s < slotCount; s++) {
-        htmlContent += `
-          <div class="slot-line" data-slot-level="${i+1}" data-slot-index="${s}">
-            Slot ${s+1}: <span class="assigned-spell">[empty]</span>
-          </div>
-        `;
-      }
-      td.innerHTML = htmlContent;
+      const desiredLevel = parseInt(levelLabel, 10);
+      filteredSpells = spells.filter(sp => parseInt(sp.level, 10) === desiredLevel);
     }
 
-    row.appendChild(td);
-  }
+    // Build a UL of spells
+    const ul = document.createElement('ul');
+    ul.classList.add('spell-list');
 
-  slotsTableBody.appendChild(row);
+    // For each spell, create a row with name, traditions, and "Spell X" label (like your screenshot)
+    filteredSpells.forEach(spell => {
+      const li = document.createElement('li');
+      li.classList.add('spell-list-item');
 
-  // Add event listeners to each slot-line
-  document.querySelectorAll('.slot-line').forEach(slotLine => {
-    slotLine.addEventListener('click', e => {
-      e.stopPropagation(); // don't bubble to the TD
-      const levelIndex = parseInt(slotLine.dataset.slotLevel, 10); // 1..10
-      const slotIndex = parseInt(slotLine.dataset.slotIndex, 10); // which slot # within that level
-      openSpellModal(levelIndex, slotIndex);
+      const spellName = spell.name || 'Unnamed Spell';
+      const traditionStr = (spell.traditions || []).join(', ') || 'No Traditions';
+      const levelString = (levelLabel === 'Cantrip') 
+        ? 'Spell Cantrip'
+        : `Spell ${spell.level}`;
+
+      li.innerHTML = `
+        <div class="spell-info">
+          <strong>${spellName}</strong>
+          <span>${traditionStr}</span>
+          <span class="spell-level-label">${levelString}</span>
+        </div>
+        <button title="View Details/Select">+</button>
+      `;
+
+      // Clicking anywhere but the button => open details
+      // Or we can unify: if user clicks anywhere in the LI, open details
+      // and in the modal is a "Add Spell" button
+      li.addEventListener('click', e => {
+        // If user clicked the button, we also open the modal, but we know the next step is "Add Spell"
+        showSpellModal(spell);
+        e.stopPropagation();
+      });
+
+      // If you only want the plus button to open details, remove the li.addEventListener
+      ul.appendChild(li);
     });
+
+    if (filteredSpells.length === 0) {
+      const noSpellLi = document.createElement('li');
+      noSpellLi.textContent = '(No spells found for this level.)';
+      ul.appendChild(noSpellLi);
+    }
+
+    contentDiv.appendChild(ul);
+
+    // Toggle accordion on header click
+    headerDiv.addEventListener('click', () => {
+      const isActive = contentDiv.classList.contains('active');
+      // Close all other open content
+      document.querySelectorAll('.accordion-content').forEach(div => div.classList.remove('active'));
+      // Toggle this one
+      if (!isActive) {
+        contentDiv.classList.add('active');
+      }
+    });
+
+    itemDiv.appendChild(headerDiv);
+    itemDiv.appendChild(contentDiv);
+    container.appendChild(itemDiv);
   });
 }
 
 /**
- * Opens a modal listing all spells of the given "spell level" (1..10).
- * Clicking "+" sets the selected spell in userSelectedSpells, closes the modal,
- * and updates the displayed slot in the table.
+ * Opens the modal with the given spell's details.
  */
-function openSpellModal(spellLevel, slotIndex) {
+function showSpellModal(spell) {
+  // Fill modal fields
+  document.getElementById('modal-spell-name').textContent = spell.name || 'Untitled Spell';
+
+  let levelText = spell.level;
+  if (typeof levelText === 'string') levelText = parseInt(levelText, 10);
+  if (isNaN(levelText)) levelText = 'Cantrip'; // fallback
+  if (levelText === 0) levelText = 'Cantrip';  // if the data uses 0 for cantrips
+  document.getElementById('modal-spell-level').textContent = 
+    (levelText === 'Cantrip') ? 'Cantrip' : `Spell Level: ${levelText}`;
+
+  document.getElementById('modal-traditions').textContent = (spell.traditions || []).join(', ') || 'None';
+  document.getElementById('modal-cast').textContent = spell.cast || 'Unknown';
+  document.getElementById('modal-range').textContent = spell.range || 'Unknown';
+  document.getElementById('modal-description').textContent = spell.description || 'No description provided';
+
+  // Show the modal
   const modal = document.getElementById('spell-modal');
-  const modalLevelLabel = document.getElementById('modal-level-label');
-  const modalSpellList = document.getElementById('modal-spell-list');
-
-  modalLevelLabel.textContent = `Showing spells of Level ${spellLevel}`;
-
-  // Clear old list
-  modalSpellList.innerHTML = '';
-
-  // Filter allSpells to only those that have "level == spellLevel"
-  // or if your data sometimes stores the level as a string, do `==` instead of `===`.
-  const spellsAtThisLevel = allSpells.filter(sp => parseInt(sp.level, 10) === spellLevel);
-
-  if (spellsAtThisLevel.length === 0) {
-    const li = document.createElement('li');
-    li.textContent = '(No spells at this level in the JSON)';
-    modalSpellList.appendChild(li);
-  } else {
-    // Build a list item with a "+" button for each spell
-    spellsAtThisLevel.forEach(spell => {
-      const li = document.createElement('li');
-      li.classList.add('spell-item');
-      li.innerHTML = `
-        <span>${spell.name}</span>
-        <button>+</button>
-      `;
-      // Clicking "+" assigns the spell
-      li.querySelector('button').addEventListener('click', () => {
-        assignSpellToSlot(spell.name, spellLevel, slotIndex);
-        modal.style.display = 'none'; // close modal
-      });
-      modalSpellList.appendChild(li);
-    });
-  }
-
-  // Show modal
   modal.style.display = 'block';
+
+  // “Add Spell” button => push to selectedSpells if not already
+  const addBtn = document.getElementById('modal-add-btn');
+  addBtn.onclick = () => {
+    addSpellToSelected(spell);
+    modal.style.display = 'none';
+  };
 }
 
 /**
- * Updates userSelectedSpells array and the table display
- * so that the clicked slot shows the chosen spell name.
+ * Adds a spell to `selectedSpells` (if not already present),
+ * then re-renders the #selected-spells-list.
  */
-function assignSpellToSlot(spellName, spellLevel, slotIndex) {
-  // Spell levels are 1..10, but our array is zero-based:
-  // userSelectedSpells[ spellLevel-1 ] = the sub-array for that level
-  const levelArray = userSelectedSpells[spellLevel - 1];
-  if (!levelArray || slotIndex >= levelArray.length) {
-    return; // safety check
+function addSpellToSelected(spell) {
+  // Avoid duplicates
+  if (!selectedSpells.find(s => s.name === spell.name)) {
+    selectedSpells.push(spell);
+    renderSelectedSpells();
   }
+}
 
-  // Assign that spell
-  levelArray[slotIndex] = spellName;
+/**
+ * Renders the selected spells in a single-column list.
+ * Clicking any item re-opens the modal with details.
+ */
+function renderSelectedSpells() {
+  const list = document.getElementById('selected-spells-list');
+  list.innerHTML = '';
 
-  // Update the visible text in the table
-  // We'll find the correct ".slot-line" element
-  // The data attributes: [data-slot-level="spellLevel"][data-slot-index="slotIndex"]
-  const slotLine = document.querySelector(
-    `.slot-line[data-slot-level="${spellLevel}"][data-slot-index="${slotIndex}"]`
-  );
-  if (slotLine) {
-    const span = slotLine.querySelector('.assigned-spell');
-    if (span) {
-      span.textContent = spellName;
-    }
-  }
+  selectedSpells.forEach(spell => {
+    const li = document.createElement('li');
+    li.textContent = spell.name;
+    // On click => show details
+    li.addEventListener('click', () => {
+      showSpellModal(spell);
+    });
+    list.appendChild(li);
+  });
 }
