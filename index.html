@@ -12,7 +12,22 @@
   </header>
 
   <main class="container">
-    <!-- This is where we'll render the spell slots (including cantrips if you want) -->
+    <!-- Character Level Selection -->
+    <div class="level-selection">
+      <label for="level-select">Select Oracle Level:</label>
+      <select id="level-select">
+        <!-- Options will be added dynamically in JavaScript -->
+        <script>
+          for (let i = 1; i <= 10; i++) {
+            document.write(`<option value="${i}">Level ${i}</option>`);
+          }
+        </script>
+      </select>
+      <button id="save-data-btn">Save</button>
+      <button id="load-data-btn">Load</button>
+    </div>
+
+    <!-- Spell Slots Display -->
     <section id="slot-screen">
       <!-- Filled dynamically by script.js -->
     </section>
