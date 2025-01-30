@@ -87,37 +87,19 @@
    * Attempt a flexible filter that checks "traits" and "traditions"
    * for the words "Oracle" or "Divine", handling both arrays and strings.
    */
-  function filterSpells(spells) {
-    return spells.filter(spell => {
-      // If either property doesn't exist, skip
-      if (!spell.traits && !spell.traditions) {
-        return false;
-      }
-
-      // Convert traits to array if it's a string
-      let traitsArray = [];
-      if (typeof spell.traits === "string") {
-        // Split by comma in case it's "Attack, Cantrip, Divine"
-        traitsArray = spell.traits.split(",").map(t => t.trim());
-      } else if (Array.isArray(spell.traits)) {
-        traitsArray = spell.traits;
-      }
-
-      // Convert traditions to array if it's a string
-      let traditionsArray = [];
-      if (typeof spell.traditions === "string") {
-        traditionsArray = spell.traditions.split(",").map(t => t.trim());
-      } else if (Array.isArray(spell.traditions)) {
-        traditionsArray = spell.traditions;
-      }
-
-      // Check if either array includes 'Oracle' or 'Divine'
-      const inTraits = traitsArray.includes("Oracle") || traitsArray.includes("Divine");
-      const inTraditions = traditionsArray.includes("Oracle") || traditionsArray.includes("Divine");
-
-      return inTraits || inTraditions;
-    });
-  }
+    function filterSpells(spells) {
+      return spells.filter(spell => {
+        // Safely handle if traditions/traits don't exist
+        const traditions = (spell.traditions || []).map(t => t.toLowerCase());
+        const traits = (spell.traits || []).map(t => t.toLowerCase());
+        
+        // Combined array for convenience
+        const combined = [...traditions, ...traits];
+    
+        // Look for 'divine' or 'oracle' in lowercase
+        return combined.includes("divine") || combined.includes("oracle");
+      });
+    }
 
   function groupByLevel(spells) {
     const groups = {};
