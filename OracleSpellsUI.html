@@ -64,58 +64,54 @@
 <div id="spell-container"></div>
 
 <script>
-  // 1. Fetch the spells JSON
+  // Fetch the spells JSON from your GitHub
   fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/refs/heads/main/spells.json')
     .then(response => response.json())
     .then(spellsData => {
-      // Quick console inspection:
       console.log("First spell object for debugging:", spellsData[0]);
 
-      // 2. Filter for Oracle or Divine spells
+      // 1. Filter for spells containing 'divine' or 'oracle' (case-insensitive)
       const filteredSpells = filterSpells(spellsData);
       console.log("Filtered spells:", filteredSpells);
 
-      // 3. Group by level
+      // 2. Group by level
       const grouped = groupByLevel(filteredSpells);
 
-      // 4. Render collapsible sections
+      // 3. Render collapsibles
       renderCollapsibles(grouped);
     })
     .catch(error => console.error("Error fetching spells:", error));
 
   /**
-   * Attempt a flexible filter that checks "traits" and "traditions"
-   * for the words "Oracle" or "Divine", handling both arrays and strings.
+   * Filter spells if they have 'divine' or 'oracle' in either
+   * traditions or traits, ignoring case.
    */
-    function filterSpells(spells) {
-      return spells.filter(spell => {
-        // Safely handle if traditions/traits don't exist
-        const traditions = (spell.traditions || []).map(t => t.toLowerCase());
-        const traits = (spell.traits || []).map(t => t.toLowerCase());
-        
-        // Combined array for convenience
-        const combined = [...traditions, ...traits];
-    
-        // Look for 'divine' or 'oracle' in lowercase
-        return combined.includes("divine") || combined.includes("oracle");
-      });
-    }
+  function filterSpells(spells) {
+    return spells.filter(spell => {
+      // Safely handle if traditions/traits are missing
+      const traditions = (spell.traditions || []).map(t => t.toLowerCase());
+      const traits = (spell.traits || []).map(t => t.toLowerCase());
 
+      // Combine both arrays
+      const combined = [...traditions, ...traits];
+
+      // Return true if includes 'divine' or 'oracle'
+      return combined.includes("divine") || combined.includes("oracle");
+    });
+  }
+
+  // Group spells by their spell level (converted to number)
   function groupByLevel(spells) {
     const groups = {};
     spells.forEach(spell => {
-      // Convert "0", "1", or "2" to a number if needed
       let levelNum = spell.level;
-      // If level is a string, parse it
-      if (typeof spell.level === "string") {
-        levelNum = parseInt(spell.level, 10);
+      // Convert to number if needed
+      if (typeof levelNum === "string") {
+        levelNum = parseInt(levelNum, 10);
       }
       if (isNaN(levelNum)) {
-        // If no valid level, skip or set to a default, e.g. -1
-        levelNum = -1;
+        levelNum = -1; // fallback if invalid
       }
-
-      // Initialize array
       if (!groups[levelNum]) {
         groups[levelNum] = [];
       }
@@ -124,10 +120,11 @@
     return groups;
   }
 
+  // Create collapsible sections by level
   function renderCollapsibles(groupedSpells) {
     const container = document.getElementById('spell-container');
 
-    // Sort levels numerically
+    // Sort levels (keys) numerically
     const sortedLevels = Object.keys(groupedSpells)
       .map(Number)
       .sort((a, b) => a - b);
@@ -138,35 +135,36 @@
       // Create the collapsible button
       const button = document.createElement('button');
       button.classList.add('collapsible');
+      // Level 0 → "Cantrips"
       button.textContent = (level === 0 ? 'Cantrips' : `Level ${level}`);
 
-      // Create the collapsible content
+      // Create the content container
       const contentDiv = document.createElement('div');
       contentDiv.classList.add('collapsible-content');
 
-      // Populate with spells
+      // Fill it with spells
       spellsAtLevel.forEach(spell => {
         const spellDiv = document.createElement('div');
         spellDiv.classList.add('spell-item');
 
-        // Spell name
+        // Name
         const nameEl = document.createElement('div');
         nameEl.classList.add('spell-name');
-        nameEl.textContent = spell.name || '(No name)';
+        nameEl.textContent = spell.name || '(No Name)';
 
-        // Spell traits (for display)
+        // Traits
         const traitsEl = document.createElement('div');
         traitsEl.classList.add('spell-traits');
-        if (Array.isArray(spell.traits)) {
-          traitsEl.textContent = `Traits: ${spell.traits.join(', ')}`;
-        } else {
-          traitsEl.textContent = `Traits: ${spell.traits}`;
-        }
+        // Convert traits to string
+        let traitsStr = Array.isArray(spell.traits) 
+          ? spell.traits.join(', ') 
+          : (spell.traits || '');
+        traitsEl.textContent = `Traits: ${traitsStr}`;
 
         // Description
         const descEl = document.createElement('div');
         descEl.classList.add('spell-description');
-        descEl.textContent = spell.description || '(No description)';
+        descEl.textContent = spell.description || '(No description provided)';
 
         spellDiv.appendChild(nameEl);
         spellDiv.appendChild(traitsEl);
@@ -174,12 +172,11 @@
         contentDiv.appendChild(spellDiv);
       });
 
-      // Add to DOM
       container.appendChild(button);
       container.appendChild(contentDiv);
 
-      // Collapsible toggle
-      button.addEventListener('click', function () {
+      // Toggle collapsible
+      button.addEventListener('click', function() {
         this.classList.toggle('active');
         if (contentDiv.style.display === 'block') {
           contentDiv.style.display = 'none';
