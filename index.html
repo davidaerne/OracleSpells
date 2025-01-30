@@ -1,78 +1,38 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pathfinder 2E Character Manager</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PF2e Oracle Spell Slots</title>
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-    <header>
-        <h1>Pathfinder 2E Character Manager</h1>
-        <nav>
-            <ul id="menu">
-                <li><a href="#" data-target="character-creation">Create Character</a></li>
-                <li><a href="#" data-target="spell-management">Manage Spells</a></li>
-            </ul>
-        </nav>
-    </header>
-    <main>
-        <!-- Character Creation Section -->
-        <section id="character-creation" class="content-section">
-            <h2>Create a New Character</h2>
-            <form id="character-form">
-                <fieldset>
-                    <legend>Character Details</legend>
-                    <label for="name">Name:</label>
-                    <input type="text" id="name" name="name" placeholder="Enter character name" required>
-                    
-                    <label for="ancestry">Ancestry:</label>
-                    <input type="text" id="ancestry" name="ancestry" placeholder="Enter ancestry" required>
-                    
-                    <label for="background">Background:</label>
-                    <input type="text" id="background" name="background" placeholder="Enter background" required>
-                    
-                    <label for="class">Class:</label>
-                    <input type="text" id="class" name="class" placeholder="Enter class" required>
-                    
-                    <button type="submit">Create Character</button>
-                </fieldset>
-            </form>
-        </section>
-        
-        <!-- Spell Management Section -->
-        <section id="spell-management" class="content-section" style="display: none;">
-            <h2>Spell Management</h2>
+  <header>
+    <h1>Oracle Spell Slots</h1>
+  </header>
 
-            <!-- Level Selection -->
-            <label for="level-select">Select Level:</label>
-            <select id="level-select">
-                <option value="1">Level 1</option>
-                <option value="2">Level 2</option>
-                <option value="3">Level 3</option>
-                <option value="4">Level 4</option>
-                <option value="5">Level 5</option>
-                <option value="6">Level 6</option>
-                <option value="7">Level 7</option>
-                <option value="8">Level 8</option>
-                <option value="9">Level 9</option>
-                <option value="10">Level 10</option>
-            </select>
+  <main class="container">
+    <!-- This is where we'll render the spell slots (including cantrips if you want) -->
+    <section id="slot-screen">
+      <!-- Filled dynamically by script.js -->
+    </section>
+  </main>
 
-            <!-- Spell Slots -->
-            <h3>Spell Slots</h3>
-            <div id="spell-slots"></div>
+  <!-- Modal for viewing and choosing spells -->
+  <div id="spell-modal" class="modal">
+    <div class="modal-content">
+      <span id="modal-close" class="modal-close">&times;</span>
+      <h2 id="modal-spell-name">Spell Name</h2>
+      <p id="modal-spell-level"></p>
+      <p><strong>Traditions:</strong> <span id="modal-traditions"></span></p>
+      <p><strong>Cast:</strong> <span id="modal-cast"></span></p>
+      <p><strong>Range:</strong> <span id="modal-range"></span></p>
+      <p id="modal-description"></p>
+      <!-- Button to assign the spell to the chosen slot -->
+      <button id="modal-assign-btn">Assign to Slot</button>
+    </div>
+  </div>
 
-            <!-- Spell List -->
-            <h3>Available Spells</h3>
-            <ul id="spell-list">
-                <!-- Cantrips will always be shown here -->
-            </ul>
-        </section>
-    </main>
-    <footer>
-        <p>© 2025 Pathfinder 2E Character Manager</p>
-    </footer>
-    <script src="script.js" defer></script>
+  <script src="script.js"></script>
 </body>
 </html>
