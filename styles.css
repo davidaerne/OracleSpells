@@ -1,5 +1,4 @@
-/* Basic styling */
-
+/* Basic page styling */
 body {
   font-family: Arial, sans-serif;
   background-color: #f4f4f4;
@@ -24,85 +23,89 @@ header {
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-h2 {
-  margin-top: 0;
+.level-selector {
+  margin-bottom: 20px;
 }
 
-/* Accordion headers */
-
-.accordion-item {
-  border-bottom: 1px solid #ccc;
-  margin-bottom: 10px;
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
 }
 
-.accordion-header {
-  background: #eee;
-  padding: 10px;
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+}
+
+td.slot-cell {
   cursor: pointer;
-  border-radius: 5px;
-  font-weight: bold;
+  background: #f9f9f9;
 }
 
-.accordion-header:hover {
-  background: #ddd;
+td.slot-cell:hover {
+  background: #eee;
 }
 
-/* The collapsible content */
-
-.accordion-content {
+/* Modal styling */
+.modal {
   display: none; /* Hidden by default */
-  margin-left: 20px;
-  margin-bottom: 10px;
+  position: fixed; /* Stay in place */
+  z-index: 999; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
 }
 
-.accordion-content.active {
-  display: block; /* Show when active */
+.modal-content {
+  background-color: #fff;
+  margin: 10% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 50%;
+  border-radius: 10px;
+  position: relative;
 }
 
-/* Spell Items and Details */
+.modal-close {
+  float: right;
+  font-size: 26px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  color: red;
+}
+
+/* Spell list in the modal */
+#modal-spell-list {
+  list-style: none;
+  padding: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  margin-top: 10px;
+  border-radius: 5px;
+}
 
 .spell-item {
-  list-style: none;
-  margin: 5px 0;
   background: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  border-bottom: 1px solid #ccc;
   padding: 10px;
-}
-
-.spell-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-}
-
-.spell-header span {
-  font-weight: bold;
-}
-
-.spell-details {
-  display: none;
-  margin-top: 5px;
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  padding: 10px;
-}
-
-.spell-details.active {
-  display: block;
 }
 
 .spell-item button {
-  margin-left: 10px;
-  cursor: pointer;
+  background: #eee;
+  border: 1px solid #ccc;
   border-radius: 5px;
-  border: 1px solid #aaa;
-  background: #f0f0f0;
-  padding: 5px 10px;
+  cursor: pointer;
 }
-
 .spell-item button:hover {
-  background: #ccc;
+  background: #ddd;
 }
