@@ -2,12 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>PF2e Oracle/Divine Spells (Actions/Range Columns)</title>
+  <!-- Make the page mobile-friendly -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PF2e Oracle/Divine Spells (Mobile Friendly)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
       background-color: #f9f9f9;
+      /* A slightly larger base font, beneficial even on desktop */
+      font-size: 16px;
     }
     h1 {
       text-align: center;
@@ -59,24 +63,19 @@
       color: #888;
     }
 
-    /*
-      Flex row for Actions and Range
-      We'll display them side by side in 2 columns.
-    */
+    /* Flex row for actions & range (2 columns) */
     .spell-extra-row {
       display: flex;
-      justify-content: space-between; /* space on left & right edges */
+      justify-content: space-between; /* columns on desktop */
       margin-top: 4px;
       font-size: 0.9rem;
       color: #444;
     }
     .spell-extra-col {
-      /* Let each column take up auto width; you can adjust as needed. */
       flex: 1;
     }
-    /* Just a little alignment tweak so Range is right-aligned. */
     .spell-range-col {
-      text-align: right;
+      text-align: right; /* range is right-aligned on desktop */
     }
 
     /* Modal overlay */
@@ -84,7 +83,7 @@
       display: none;
       position: fixed;
       z-index: 9999;
-      left: 0; 
+      left: 0;
       top: 0;
       width: 100%;
       height: 100%;
@@ -151,11 +150,30 @@
     .modal-field-content {
       margin-left: 8px;
     }
+
+    /* -------------------------------------------
+       MEDIA QUERY for smaller mobile screens
+       (you can adjust max-width & styling to taste)
+       ------------------------------------------- */
+    @media (max-width: 600px) {
+      body {
+        /* Increase body font a bit more on small screens */
+        font-size: 18px;
+      }
+      .spell-extra-row {
+        /* Stack vertically to avoid cramped columns */
+        display: block;
+      }
+      .spell-range-col {
+        text-align: left; /* no need to right-align on mobile */
+        margin-top: 4px;
+      }
+    }
   </style>
 </head>
 <body>
 
-<h1>Oracle &amp; Divine Spells</h1>
+<h1>Oracle &amp; Divine Spells (Mobile Friendly)</h1>
 
 <!-- Collapsible container -->
 <div id="spell-container"></div>
@@ -189,9 +207,8 @@
  * 2) Filter for 'divine' or 'oracle'
  * 3) Group by level (0 if cantrip)
  * 4) Sort alpha by name
- * 5) Render collapsibles
- * 6) Show actions + range in columns
- * 7) Show "Spell Level X" in modal, etc.
+ * 5) Render collapsibles (only one open)
+ * 6) Show actions + range in columns on desktop, stacked on mobile
  */
 
 fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/refs/heads/main/spells.json')
@@ -267,27 +284,20 @@ function renderCollapsibles(groupedSpells) {
       traitsEl.classList.add('spell-traits');
       traitsEl.textContent = `Traits: ${ (spell.traits || []).join(', ') }`;
 
-      // Row with 2 columns: Actions on the left, Range on the right
+      // Flex row for actions & range
       const extraRow = document.createElement('div');
       extraRow.classList.add('spell-extra-row');
 
-      // Left column: Actions
+      // Left column: actions
       const actionsCol = document.createElement('div');
       actionsCol.classList.add('spell-extra-col');
-      // If actionMax is present, show it. Otherwise show nothing or single action?
       if (spell.actionMax) {
-        // e.g. "Actions: ③" 
         actionsCol.innerHTML = `Actions: ${ buildActionIcons(spell.actionMax) }`;
-      } else {
-        // If you want to show a single action or skip entirely:
-        // actionsCol.innerHTML = (spell.action) ? `Actions: ${ buildActionIcons(spell.action) }` : '';
-        // Or just skip if there's no actionMax
-        if(spell.action){
-          actionsCol.innerHTML = `Actions: ${ buildActionIcons(spell.action) }`;
-        }
+      } else if (spell.action) {
+        actionsCol.innerHTML = `Actions: ${ buildActionIcons(spell.action) }`;
       }
 
-      // Right column: Range
+      // Right column: range
       const rangeCol = document.createElement('div');
       rangeCol.classList.add('spell-extra-col', 'spell-range-col');
       rangeCol.textContent = spell.range ? `Range: ${spell.range}` : '';
@@ -324,10 +334,12 @@ function renderCollapsibles(groupedSpells) {
   });
 }
 
+// Replaces digits with a circle
 function buildActionIcons(str){
   return str.replace(/\d+/g, m => `<span class="action-circle">${m}</span>`);
 }
 
+// open modal
 function openSpellModal(spell){
   document.getElementById('modal-title').textContent = spell.name || 'Unknown Spell';
 
@@ -341,7 +353,7 @@ function openSpellModal(spell){
   }
   document.getElementById('modal-level').textContent = lvlText;
 
-  // Traits as tags
+  // traits
   const traitsDiv = document.getElementById('modal-traits');
   traitsDiv.innerHTML = '';
   (spell.traits || []).forEach(tr => {
@@ -351,11 +363,10 @@ function openSpellModal(spell){
     traitsDiv.appendChild(tag);
   });
 
-  // Traditions
   document.getElementById('modal-traditions').textContent =
     (spell.traditions || []).join(', ');
 
-  // Build cast line
+  // cast line
   let castString = '';
   if(spell.action){
     if(spell.actionMax){
@@ -369,20 +380,20 @@ function openSpellModal(spell){
   }
   document.getElementById('modal-cast').innerHTML = castString || '(No action info)';
 
-  // Range
+  // range
   document.getElementById('modal-range').textContent = spell.range || '(No range specified)';
 
-  // Description
+  // description
   let desc = spell.description || '(No description)';
   desc = desc.replace(/\*\*(.*?)\*\*/g, '<br><strong>$1</strong><br>');
   desc = desc.replace(/\|(\d+)\|\s*/g, '<br><span class="action-circle">$1</span> ');
   document.getElementById('modal-description').innerHTML = desc;
 
-  // Show modal
+  // show
   document.getElementById('spell-modal').style.display = 'block';
 }
 
-// Close modal
+// close modal
 document.getElementById('close-modal').addEventListener('click', ()=>{
   document.getElementById('spell-modal').style.display='none';
 });
