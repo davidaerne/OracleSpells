@@ -3,27 +3,65 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Spell Selector (Accordion Style)</title>
-  <!-- Link external stylesheet -->
+  <title>Oracle Spell Slot Progression</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
   <header>
-    <h1>Oracle Spell Selector</h1>
+    <h1>Oracle Spell Slot Selection</h1>
   </header>
 
   <div class="container">
-    <!-- Accordion of Spells by Level -->
-    <h2>Available Spells</h2>
-    <div id="accordion-container"><!-- Inserted dynamically by script.js --></div>
+    <!-- Class Level Selector -->
+    <div class="level-selector">
+      <label for="class-level">Oracle Class Level:</label>
+      <select id="class-level">
+        <option value="1">Level 1</option>
+        <option value="2">Level 2</option>
+        <option value="3">Level 3</option>
+        <option value="4">Level 4</option>
+        <option value="5">Level 5</option>
+        <option value="6">Level 6</option>
+        <option value="7">Level 7</option>
+        <option value="8">Level 8</option>
+        <option value="9">Level 9</option>
+        <option value="10">Level 10</option>
+      </select>
+    </div>
 
-    <!-- Selected Spells -->
-    <h2>Selected Spells</h2>
-    <ul id="selected-spell-list"></ul>
+    <!-- Spell Slot Table -->
+    <table id="spell-slots-table">
+      <thead>
+        <tr>
+          <th>Level 1</th>
+          <th>Level 2</th>
+          <th>Level 3</th>
+          <th>Level 4</th>
+          <th>Level 5</th>
+          <th>Level 6</th>
+          <th>Level 7</th>
+          <th>Level 8</th>
+          <th>Level 9</th>
+          <th>Level 10</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Dynamically filled by script.js -->
+      </tbody>
+    </table>
   </div>
 
-  <!-- Link external JavaScript -->
+  <!-- Modal for selecting a spell -->
+  <div id="spell-modal" class="modal">
+    <div class="modal-content">
+      <span id="modal-close" class="modal-close">&times;</span>
+      <h2>Select a Spell</h2>
+      <p id="modal-level-label"></p>
+      <ul id="modal-spell-list"></ul>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
