@@ -40,27 +40,18 @@
             background: #333;
             color: white;
         }
-        input {
-            padding: 10px;
-            width: 80%;
-            margin-top: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Oracle Spell Viewer</h1>
-        <input type="text" id="search" placeholder="Search Spells..." onkeyup="filterSpells()">
         <div id="spell-counts"></div>
         <table>
             <thead>
                 <tr>
                     <th>Name</th>
                     <th>Level</th>
-                    <th>School</th>
-                    <th>Description</th>
+                    <th>Traits</th>
                 </tr>
             </thead>
             <tbody id="spell-list"></tbody>
@@ -72,7 +63,7 @@
         
         async function loadSpells() {
             try {
-                const response = await fetch('spells.json');
+                const response = await fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/main/spells.json');
                 const spells = await response.json();
                 
                 // Filter for Oracle + Divine spells (Cantrip, Level 1, Level 2)
@@ -109,17 +100,10 @@
                 const row = `<tr>
                     <td>${spell.name}</td>
                     <td>${spell.level}</td>
-                    <td>${spell.school}</td>
-                    <td>${spell.description.substring(0, 100)}...</td>
+                    <td>${spell.traits.join(", ")}</td>
                 </tr>`;
                 spellList.innerHTML += row;
             });
-        }
-        
-        function filterSpells() {
-            const query = document.getElementById("search").value.toLowerCase();
-            const filtered = spellsData.filter(spell => spell.name.toLowerCase().includes(query));
-            displaySpells(filtered);
         }
         
         loadSpells();
