@@ -1,17 +1,24 @@
-/**
+/******************************************************************************
  * script.js
- * This file loads spells from a remote JSON, filters them,
- * and displays only "Oracle Divine" spells (i.e., spells that include 'divine' in traditions).
- * When the user selects "Cantrip" in the dropdown, it checks if the spell is typed as "Cantrip"
- * or has "cantrip" in traits. Otherwise it uses numeric level filtering.
- */
+ * 
+ * 1. Fetches the spells.json data from a remote URL.
+ * 2. Normalizes each spell into a consistent shape:
+ *      - subType: 'Cantrip' or 'Spell'
+ *      - level: numeric or left as-is
+ *      - tags: might contain "Offensive", "Defensive", etc.
+ *      - traditions: array of traditions
+ * 3. Always filters for "divine" spells (Oracle Divine).
+ * 4. Has separate dropdowns for:
+ *      - Spell Subtype (All | Cantrip | Spell)
+ *      - Spell Level (All | 1..10)
+ *      - Tag (All | Offensive | Defensive)
+ * 5. Also has a text box for name search.
+ *****************************************************************************/
 
-const spells = [];       // Master list of all spells from JSON
-const selectedSpells = []; // Spells the user adds
+const spells = [];        // Master list of all spells
+const selectedSpells = []; // Spells user has added
 
-/**
- * Fetch the JSON data on page load
- */
+// Fetch JSON data on page load
 fetch('https://davidaerne.github.io/OracleSpells/spells.json')
   .then(response => {
     if (!response.ok) {
@@ -21,37 +28,31 @@ fetch('https://davidaerne.github.io/OracleSpells/spells.json')
   })
   .then(data => {
     data.forEach(spell => {
-      // We'll store "traits" if it exists
+      // We'll interpret "Cantrip" vs. "Spell" from the data.
+      // If spell.type is "Cantrip" or traits include "cantrip", we consider it a 'Cantrip'
+      // Otherwise, we call it a 'Spell' (you could add more logic for "Focus" or "Ritual" if you need)
+      let subType = 'Spell';
       const traits = spell.traits || [];
-
-      // We'll define a standard "type" for each spell:
-      // - "Cantrip" if 'type' is "Cantrip" or traits contain "cantrip"
-      // - "offensive"/"defensive" if the spell tags or type says so
-      // - Otherwise "unknown"
-      let newType = 'unknown';
-
-      // If the JSON has something like:  "type": "Cantrip",
-      // or the "traits" includes "cantrip"
       if (
         (typeof spell.type === 'string' && spell.type.toLowerCase() === 'cantrip') ||
-        (traits.includes('cantrip'))
+        traits.map(t => t.toLowerCase()).includes('cantrip')
       ) {
-        newType = 'Cantrip';
-      }
-      // If the JSON has "tags": ["Offensive"]...
-      else if (spell.tags && spell.tags.includes('Offensive')) {
-        newType = 'offensive';
-      }
-      else if (spell.tags && spell.tags.includes('Defensive')) {
-        newType = 'defensive';
+        subType = 'Cantrip';
       }
 
-      // Push a standardized object into our spells array
+      // Offensive / Defensive / unknown
+      let typedTag = 'unknown';
+      if (spell.tags && spell.tags.includes('Offensive')) {
+        typedTag = 'offensive';
+      } else if (spell.tags && spell.tags.includes('Defensive')) {
+        typedTag = 'defensive';
+      }
+
       spells.push({
         name: spell.name,
-        level: spell.level, // might be numeric (1-10) or a string
-        type: newType,
-        traits: traits,
+        level: spell.level,  // e.g. 1, 2, 10, or "1" if the JSON is string
+        subType,             // 'Cantrip' or 'Spell'
+        tags: typedTag,      // 'offensive', 'defensive', or 'unknown'
         traditions: spell.traditions || [],
         cast: spell.cast || 'Unknown',
         range: spell.range || 'Unknown',
@@ -59,66 +60,78 @@ fetch('https://davidaerne.github.io/OracleSpells/spells.json')
       });
     });
 
-    // Populate the "All Spells" tab with every spell from the JSON
+    // Populate "All Spells" tab with everything
     displaySpells(spells, 'all-spell-list');
-
-    // Also apply an initial filter to show "Available Spells"
+    // Do the initial filter for "Available Spells"
     filterSpells();
   })
   .catch(error => {
     console.error('Error loading spells:', error);
   });
 
-
 /**
- * Filters spells for the "Available Spells" tab.
- *   - Must include 'divine' in traditions (Oracle Divine).
- *   - Must match the selected "level" or "Cantrip" selection.
- *   - Must match the selected "type" (offensive/defensive/all).
- *   - Must match the name search box (case-insensitive).
+ * Filter the spells for the "Available Spells" tab.
+ * We always want "Oracle Divine" (i.e., includes 'divine' in traditions).
+ * Then we match:
+ *  - Subtype (all | cantrip | spell)
+ *  - Level (all | numeric)
+ *  - Tag (all | offensive | defensive)
+ *  - Name includes search text
  */
 function filterSpells() {
-  const level = document.getElementById('spell-level').value;
-  const type = document.getElementById('spell-type').value;
+  // Grab filter values
+  const chosenSubtype = document.getElementById('spell-subtype').value; // 'all', 'cantrip', 'spell'
+  const chosenLevel = document.getElementById('spell-level').value;     // 'all' or numeric string
+  const chosenTag = document.getElementById('spell-tag').value;         // 'all', 'offensive', 'defensive'
   const searchQuery = document.getElementById('search-box').value.toLowerCase();
 
-  // Filter array
-  const filteredSpells = spells.filter(spell => {
-    // 1) We only want "Oracle Divine" spells, so the traditions must contain 'divine'
-    const isDivine = spell.traditions.includes('divine');
-    if (!isDivine) return false;  // skip immediately if not divine
-
-    // 2) Check the selected spell-level:
-    //    - If user chose "Cantrip", we match if our standardized "type" is "Cantrip".
-    //    - Otherwise, compare numeric levels (the JSON might store them as a number or string)
-    let matchesLevel = false;
-    if (level === 'Cantrip') {
-      matchesLevel = (spell.type === 'Cantrip');
-    } else {
-      matchesLevel = (spell.level == level); 
+  const filtered = spells.filter(spell => {
+    // 1) Must have 'divine' in traditions for Oracle Divine
+    if (!spell.traditions.includes('divine')) {
+      return false;
     }
-    if (!matchesLevel) return false;
 
-    // 3) Match type: 'all' means skip the check; 'offensive' or 'defensive' must match
-    //    (We've standardized `spell.type` as 'offensive', 'defensive', 'Cantrip', or 'unknown')
-    const matchesType = (type === 'all' || spell.type === type);
-    if (!matchesType) return false;
+    // 2) Subtype filter
+    if (chosenSubtype !== 'all') {
+      // if chosenSubtype = 'cantrip', we want only subType==='Cantrip'
+      // if chosenSubtype = 'spell', we want only subType==='Spell'
+      const subCheck = spell.subType.toLowerCase() === chosenSubtype;
+      if (!subCheck) return false;
+    }
 
-    // 4) Name search
-    const matchesName = spell.name.toLowerCase().includes(searchQuery);
-    if (!matchesName) return false;
+    // 3) Level filter
+    if (chosenLevel !== 'all') {
+      // The JSON might store level as a number or a string
+      // Compare them as strings or parse to integer
+      // For simplicity, do string compare:
+      if (String(spell.level) !== chosenLevel) {
+        return false;
+      }
+    }
 
-    // If all conditions pass, this spell is included
+    // 4) Tag (offensive / defensive) filter
+    if (chosenTag !== 'all') {
+      // typedTag is 'offensive', 'defensive', or 'unknown'
+      if (spell.tags !== chosenTag) {
+        return false;
+      }
+    }
+
+    // 5) Name search
+    if (!spell.name.toLowerCase().includes(searchQuery)) {
+      return false;
+    }
+
+    // If we passed all conditions, keep this spell
     return true;
   });
 
-  // Display results in "Available Spells"
-  displaySpells(filteredSpells, 'available-spell-list');
+  // Show them in the "Available Spells" list
+  displaySpells(filtered, 'available-spell-list');
 }
 
-
 /**
- * Renders a list of spells into a UL element with ID == elementId
+ * Displays a list of spells into the given <ul> element by ID
  */
 function displaySpells(spellList, elementId) {
   const listElement = document.getElementById(elementId);
@@ -128,7 +141,7 @@ function displaySpells(spellList, elementId) {
     const li = document.createElement('li');
     li.classList.add('spell-item');
 
-    // Header: name and plus button
+    // Header: name + add button
     const headerDiv = document.createElement('div');
     headerDiv.classList.add('spell-header');
     headerDiv.innerHTML = `
@@ -136,26 +149,30 @@ function displaySpells(spellList, elementId) {
       <button onclick="addSpell('${spell.name}')">+</button>
     `;
 
-    // Details: hidden by default
+    // Body details (hidden by default)
     const detailsDiv = document.createElement('div');
     detailsDiv.classList.add('spell-details');
     detailsDiv.innerHTML = `
       <strong>Level:</strong> ${spell.level}<br>
-      <strong>Type:</strong> ${spell.type || 'N/A'}<br>
+      <strong>Subtype:</strong> ${spell.subType}<br>
+      <strong>Tag:</strong> ${spell.tags}<br>
       <strong>Traditions:</strong> ${spell.traditions.join(', ')}<br>
       <strong>Cast:</strong> ${spell.cast}<br>
       <strong>Range:</strong> ${spell.range}<br>
-      <strong>Description:</strong> ${spell.description}<br>
+      <strong>Description:</strong> ${spell.description}
     `;
 
-    // When the user clicks anywhere on the LI except the + button, toggle details
+    // Clicking on the list item toggles the details,
+    // but we don't toggle if the user clicked the "+" button.
     li.onclick = (event) => {
       if (!event.target.matches('button')) {
-        const active = detailsDiv.classList.contains('active');
-        // Close all open details first
+        const alreadyActive = detailsDiv.classList.contains('active');
+        // Close all open details
         document.querySelectorAll('.spell-details').forEach(d => d.classList.remove('active'));
-        // Then toggle this one
-        if (!active) detailsDiv.classList.add('active');
+        // Toggle current
+        if (!alreadyActive) {
+          detailsDiv.classList.add('active');
+        }
       }
     };
 
@@ -165,9 +182,8 @@ function displaySpells(spellList, elementId) {
   });
 }
 
-
 /**
- * Adds a spell to the "Selected Spells" list
+ * Adds a spell to "Selected Spells" list
  */
 function addSpell(spellName) {
   const spell = spells.find(sp => sp.name === spellName);
@@ -177,9 +193,8 @@ function addSpell(spellName) {
   }
 }
 
-
 /**
- * Switches between the three tabs (Available, Selected, All)
+ * Switch tab UI
  */
 function switchTab(event, tabId) {
   document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
