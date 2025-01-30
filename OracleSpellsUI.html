@@ -66,11 +66,12 @@
                 const response = await fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/main/spells.json');
                 const spells = await response.json();
                 
-                // Filter for Oracle + Divine spells (Cantrip, Level 1, Level 2)
-                spellsData = spells.filter(spell => 
-                    spell.traits?.includes("Oracle") && spell.traits?.includes("Divine") && 
-                    ["cantrip", "1", "2"].includes(spell.level)
-                );
+                // Normalize traits to lowercase and filter for Oracle + Divine spells (Cantrip, Level 1, Level 2)
+                spellsData = spells.filter(spell => {
+                    const traits = spell.traits?.map(t => t.toLowerCase()) || [];
+                    return traits.includes("oracle") && traits.includes("divine") &&
+                           ["cantrip", 1, 2, "1", "2"].includes(spell.level);
+                });
                 
                 displayCounts();
                 displaySpells(spellsData);
@@ -82,9 +83,9 @@
         function displayCounts() {
             const counts = { cantrip: 0, level1: 0, level2: 0 };
             spellsData.forEach(spell => {
-                if (spell.level === "cantrip") counts.cantrip++;
-                else if (spell.level === "1") counts.level1++;
-                else if (spell.level === "2") counts.level2++;
+                if (spell.level === "cantrip" || spell.level === 0) counts.cantrip++;
+                else if (spell.level === "1" || spell.level === 1) counts.level1++;
+                else if (spell.level === "2" || spell.level === 2) counts.level2++;
             });
             
             document.getElementById("spell-counts").innerHTML = `
