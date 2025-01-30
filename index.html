@@ -1,67 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Oracle Spell Slot Progression</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>PF2e Oracle Spells (Mobile-Friendly)</title>
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
 
   <header>
-    <h1>Oracle Spell Slot Selection</h1>
+    <h1>Oracle Spells</h1>
   </header>
 
-  <div class="container">
-    <!-- Class Level Selector -->
-    <div class="level-selector">
-      <label for="class-level">Oracle Class Level:</label>
-      <select id="class-level">
-        <option value="1">Level 1</option>
-        <option value="2">Level 2</option>
-        <option value="3">Level 3</option>
-        <option value="4">Level 4</option>
-        <option value="5">Level 5</option>
-        <option value="6">Level 6</option>
-        <option value="7">Level 7</option>
-        <option value="8">Level 8</option>
-        <option value="9">Level 9</option>
-        <option value="10">Level 10</option>
-      </select>
+  <main class="container">
+    <!-- Accordion: Cantrip + Levels 1..10 -->
+    <div id="accordion-container">
+      <!-- Will be populated by script.js -->
     </div>
 
-    <!-- Spell Slot Table -->
-    <table id="spell-slots-table">
-      <thead>
-        <tr>
-          <th>Level 1</th>
-          <th>Level 2</th>
-          <th>Level 3</th>
-          <th>Level 4</th>
-          <th>Level 5</th>
-          <th>Level 6</th>
-          <th>Level 7</th>
-          <th>Level 8</th>
-          <th>Level 9</th>
-          <th>Level 10</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Dynamically filled by script.js -->
-      </tbody>
-    </table>
-  </div>
+    <!-- Selected Spells List -->
+    <section id="selected-spells-section">
+      <h2>Selected Spells</h2>
+      <ul id="selected-spells-list"><!-- Filled dynamically --></ul>
+    </section>
+  </main>
 
-  <!-- Modal for selecting a spell -->
+  <!-- Spell Details Modal -->
   <div id="spell-modal" class="modal">
     <div class="modal-content">
       <span id="modal-close" class="modal-close">&times;</span>
-      <h2>Select a Spell</h2>
-      <p id="modal-level-label"></p>
-      <ul id="modal-spell-list"></ul>
+      <h2 id="modal-spell-name">Spell Name</h2>
+      <p><strong id="modal-spell-level"></strong></p>
+      <p><strong>Traditions:</strong> <span id="modal-traditions"></span></p>
+      <p><strong>Cast:</strong> <span id="modal-cast"></span></p>
+      <p><strong>Range:</strong> <span id="modal-range"></span></p>
+      <p id="modal-description"></p>
+
+      <!-- “Add” button to put it in Selected Spells -->
+      <button id="modal-add-btn">Add Spell</button>
     </div>
   </div>
 
+  <!-- Link to our JS file -->
   <script src="script.js"></script>
 </body>
 </html>
