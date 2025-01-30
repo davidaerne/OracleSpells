@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>PF2e Oracle/Divine Spells (No Components, Action Circles)</title>
+  <title>PF2e Oracle/Divine Spells (Actions on New Lines)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -64,7 +64,7 @@
       display: none;
       position: fixed;
       z-index: 9999;
-      left: 0; 
+      left: 0;
       top: 0;
       width: 100%;
       height: 100%;
@@ -169,8 +169,7 @@
  * 2) Filter for spells with 'divine' or 'oracle'
  * 3) Group them by level (0 for cantrips)
  * 4) Render collapsibles
- * 5) On click, open the modal with no "Components" 
- *    and numeric actions replaced by circles.
+ * 5) On click, open the modal
  */
 fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/refs/heads/main/spells.json')
   .then(res => res.json())
@@ -304,17 +303,15 @@ function openSpellModal(spell) {
   });
 
   // Traditions
-  document.getElementById('modal-traditions').textContent = 
+  document.getElementById('modal-traditions').textContent =
     (spell.traditions || []).join(', ');
 
   // Cast line: no components, no semicolons
-  // E.g. "Actions: <circle>2</circle> somatic, verbal"
   let castString = '';
   if (spell.action) {
-    // e.g. "Actions: <circle>2</circle>"
+    // "Actions: <circle>N</circle>"
     castString += 'Actions: ' + buildActionIcons(spell.action);
   }
-  // If there's a "cast" field (like "somatic, verbal"), add it with a space
   if (spell.cast) {
     castString += (castString ? ' ' : '') + spell.cast;
   }
@@ -323,12 +320,17 @@ function openSpellModal(spell) {
   // Range
   document.getElementById('modal-range').textContent = spell.range || '(No range specified)';
 
-  // Description: 
+  // Description:
   // 1) Bold for **...**
-  // 2) Numbered circle for |n|
+  // 2) Action circles for |n|
+  // 3) Put each |n| on its own line
   let desc = spell.description || '(No description)';
+  // Make **text** bold on new lines
   desc = desc.replace(/\*\*(.*?)\*\*/g, '<br><strong>$1</strong><br>');
-  desc = desc.replace(/\|(\d+)\|/g, '<span class="action-circle">$1</span>');
+  // Put each action on a new line + circle
+  // e.g. "|1| Something..." -> "<br><span class='action-circle'>1</span> Something..."
+  desc = desc.replace(/\|(\d+)\|\s*/g, '<br><span class="action-circle">$1</span> ');
+
   document.getElementById('modal-description').innerHTML = desc;
 
   // Show modal
