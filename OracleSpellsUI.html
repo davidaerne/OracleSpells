@@ -2,18 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!-- Make page mobile-friendly -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spell DB</title>
-
+  <title>Spell DB (With Bold Formatting)</title>
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       background-color: #f9f9f9;
     }
-
-    /* A simple header/nav with a title and hamburger menu */
     .header {
       display: flex;
       align-items: center;
@@ -34,8 +30,6 @@
       border: none;
       outline: none;
     }
-
-    /* Filter panel (shown by default on desktop) */
     .filter-panel {
       background-color: #fff;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -52,13 +46,9 @@
     .filter-panel select {
       padding: 0.25rem 0.5rem;
     }
-
-    /* Container for the entire body content aside from header */
     .content {
       padding: 1rem;
     }
-
-    /* Collapsible styling (same concept as before) */
     .collapsible {
       background-color: #eee;
       color: #444;
@@ -85,8 +75,6 @@
       margin-bottom: 10px;
       padding: 0 18px;
     }
-
-    /* Spell items */
     .spell-item {
       border-bottom: 1px solid #ddd;
       padding: 10px 0;
@@ -102,7 +90,6 @@
       font-style: italic;
       color: #888;
     }
-    /* Range & actions in columns (optional) */
     .spell-extra-row {
       display: flex;
       justify-content: space-between;
@@ -123,8 +110,6 @@
       font-weight: bold;
       margin: 0 4px;
     }
-
-    /* Modal styling (if you still want it) */
     .modal {
       display: none;
       position: fixed;
@@ -156,31 +141,27 @@
     .close-modal:hover {
       color: #999;
     }
-
-    /* MOBILE / RESPONSIVE */
     @media (max-width: 768px) {
       .hamburger {
-        display: block; /* show hamburger on mobile */
+        display: block;
       }
-      /* Hide the filter panel by default on mobile (shown via JS toggle) */
       .filter-panel {
         display: none;
         flex-direction: column;
         gap: 0.5rem;
       }
     }
-
   </style>
 </head>
 <body>
 
-<!-- Header with "Spell DB" title and a hamburger menu -->
+<!-- Header -->
 <div class="header">
   <h1>Spell DB</h1>
   <button class="hamburger" id="hamburger">&#9776;</button>
 </div>
 
-<!-- Filter panel (hidden by default on mobile) -->
+<!-- Filter panel -->
 <div class="filter-panel" id="filterPanel">
   <div>
     <label for="searchInput">Search</label>
@@ -204,12 +185,12 @@
   <button id="applyBtn">Apply</button>
 </div>
 
-<!-- Main content area -->
+<!-- Content -->
 <div class="content">
   <div id="spell-container"></div>
 </div>
 
-<!-- Modal (if you want to keep the detailed view) -->
+<!-- Modal -->
 <div id="spell-modal" class="modal">
   <div class="modal-content">
     <span id="close-modal" class="close-modal">&times;</span>
@@ -221,46 +202,32 @@
 </div>
 
 <script>
-/* --------------------------------------------------------------
-   1. Load Spells
-   2. Filter & Sort
-   3. Render
-   4. Toggle Filter (mobile)
-   --------------------------------------------------------------*/
-
-let allSpells = [];    // store everything from JSON
+let allSpells = [];
 let filteredSpells = [];
 
-/** 1) Fetch the JSON */
 fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/refs/heads/main/spells.json')
   .then(res => res.json())
   .then(data => {
     allSpells = data;
-    applyFiltersAndRender(); // show something initially
+    applyFiltersAndRender();
   })
   .catch(err => console.error('Fetch error:', err));
 
-/** 2) Filter & Sort */
 function applyFiltersAndRender() {
   const searchValue = document.getElementById('searchInput').value.toLowerCase();
-  const typeValue = document.getElementById('typeSelect').value; // 'All', 'Spell', or 'Cantrip'
+  const typeValue = document.getElementById('typeSelect').value; // 'All', 'Spell', 'Cantrip'
   const sortValue = document.getElementById('sortSelect').value; // 'Level', 'Name'
 
-  // Filter
   filteredSpells = allSpells.filter(spell => {
-    // We only want "divine" or "oracle" spells if you keep that old filter:
-    // (Remove if you want ALL spells.)
+    // Optional: filter for 'divine' or 'oracle'
     const traditions = (spell.traditions || []).map(t => t.toLowerCase());
     const traits = (spell.traits || []).map(t => t.toLowerCase());
     const combined = [...traditions, ...traits];
-    const isDivineOrOracle = combined.includes('divine') || combined.includes('oracle');
+    if (!combined.includes('divine') && !combined.includes('oracle')) {
+      return false;
+    }
 
-    // Optional: if you REALLY only want divine/oracle:
-    if (!isDivineOrOracle) return false;
-
-    // "Type" filter: check if it's cantrip or spell
-    // We'll say "Cantrip" means either `spell.type == 'Cantrip'` or traits includes 'cantrip'.
-    // You can adapt to your data.
+    // Filter by type
     let matchesType = true;
     if (typeValue === 'Cantrip') {
       matchesType = isCantrip(spell);
@@ -269,9 +236,9 @@ function applyFiltersAndRender() {
     }
     if (!matchesType) return false;
 
-    // "Search" filter: check name or traits
-    let inName = spell.name.toLowerCase().includes(searchValue);
-    let inTrait = (spell.traits || []).some(t => t.toLowerCase().includes(searchValue));
+    // Search by name or traits
+    const inName = spell.name.toLowerCase().includes(searchValue);
+    const inTrait = (spell.traits || []).some(t => t.toLowerCase().includes(searchValue));
     if (searchValue && !inName && !inTrait) return false;
 
     return true;
@@ -279,10 +246,9 @@ function applyFiltersAndRender() {
 
   // Sort
   if (sortValue === 'Level') {
-    // If cantrip, treat level as 0
-    filteredSpells.sort((a, b) => getSpellLevel(a) - getSpellLevel(b));
+    filteredSpells.sort((a,b) => getSpellLevel(a) - getSpellLevel(b));
   } else if (sortValue === 'Name') {
-    filteredSpells.sort((a, b) => a.name.localeCompare(b.name));
+    filteredSpells.sort((a,b) => a.name.localeCompare(b.name));
   }
 
   renderCollapsibles(filteredSpells);
@@ -300,12 +266,11 @@ function getSpellLevel(spell) {
   return (isNaN(parsed)) ? -1 : parsed;
 }
 
-/** 3) Render Spells in Collapsibles */
 function renderCollapsibles(spells) {
   const container = document.getElementById('spell-container');
-  container.innerHTML = ''; // clear old
-  // We can group by level or simply show them all. Up to you.
-  // For simplicity, let's group them by level:
+  container.innerHTML = '';
+
+  // Group by level
   const levelMap = {};
   spells.forEach(sp => {
     const lvl = getSpellLevel(sp);
@@ -315,10 +280,9 @@ function renderCollapsibles(spells) {
 
   const sortedLevels = Object.keys(levelMap)
     .map(Number)
-    .sort((a, b) => a - b);
+    .sort((a,b) => a - b);
 
   sortedLevels.forEach(lvl => {
-    // Collapsible button: "Level 1" or "Cantrips" for 0
     const btn = document.createElement('button');
     btn.classList.add('collapsible');
     btn.textContent = (lvl === 0 ? 'Cantrips' : `Level ${lvl}`);
@@ -326,7 +290,6 @@ function renderCollapsibles(spells) {
     const contentDiv = document.createElement('div');
     contentDiv.classList.add('collapsible-content');
 
-    // Each spell item
     levelMap[lvl].forEach(spell => {
       const itemDiv = document.createElement('div');
       itemDiv.classList.add('spell-item');
@@ -337,14 +300,13 @@ function renderCollapsibles(spells) {
 
       const traitsEl = document.createElement('div');
       traitsEl.classList.add('spell-traits');
-      traitsEl.textContent = `Traits: ${ (spell.traits || []).join(', ') }`;
+      traitsEl.textContent = `Traits: ${(spell.traits || []).join(', ')}`;
 
-      // If you want actions & range:
+      // Extra row for actions & range
       const extraRow = document.createElement('div');
       extraRow.classList.add('spell-extra-row');
       extraRow.innerHTML = `
         <div>
-          <!-- If there's actionMax, show that circle. If only "action", show that. -->
           ${ spell.actionMax ? `Actions: ${buildActionIcons(spell.actionMax)}` 
             : (spell.action ? `Actions: ${buildActionIcons(spell.action)}` : '') }
         </div>
@@ -357,13 +319,12 @@ function renderCollapsibles(spells) {
       itemDiv.appendChild(traitsEl);
       itemDiv.appendChild(extraRow);
 
-      // Optionally open modal on click
+      // Click -> open modal
       itemDiv.addEventListener('click', () => openSpellModal(spell));
 
       contentDiv.appendChild(itemDiv);
     });
 
-    // Expand/Collapse logic
     btn.addEventListener('click', () => {
       if (contentDiv.style.display === 'block') {
         contentDiv.style.display = 'none';
@@ -377,51 +338,33 @@ function renderCollapsibles(spells) {
   });
 }
 
-/** 4) Mobile Toggle for filter panel */
-const hamburgerBtn = document.getElementById('hamburger');
-const filterPanel = document.getElementById('filterPanel');
-hamburgerBtn.addEventListener('click', () => {
-  // toggle display
-  if (filterPanel.style.display === 'flex' || filterPanel.style.display === '') {
-    filterPanel.style.display = 'none';
-  } else {
-    filterPanel.style.display = 'flex';
-  }
-});
-
-/** "Apply" button calls applyFiltersAndRender */
-document.getElementById('applyBtn').addEventListener('click', () => {
-  applyFiltersAndRender();
-  // Optionally close the filter panel on mobile after applying:
-  if (window.innerWidth < 768) {
-    filterPanel.style.display = 'none';
-  }
-});
-
-/** Helper: build action icons from digits */
+// Build action icons
 function buildActionIcons(str) {
   return str.replace(/\d+/g, m => `<span class="action-circle">${m}</span>`);
 }
 
-/** (Optional) Simple modal for details */
+// Open modal with bold/line-break replacements
 function openSpellModal(spell) {
-  // Title
   document.getElementById('modal-title').textContent = spell.name;
 
-  // Level
   const lvl = getSpellLevel(spell);
   document.getElementById('modal-level').textContent = 
-    (lvl >= 0) ? `Spell Level ${lvl}` : '';
+    (lvl >= 0 ? `Spell Level ${lvl}` : '');
 
-  // Traits
   document.getElementById('modal-traits').textContent = 
     `Traits: ${(spell.traits || []).join(', ')}`;
 
-  // Description
-  document.getElementById('modal-description').textContent = 
-    spell.description || '(No description)';
+  let desc = spell.description || '(No description)';
 
-  // Show
+  // 1) Convert **text** to bold
+  desc = desc.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  
+  // 2) Convert |X| to new line + circle
+  desc = desc.replace(/\|(\d+)\|\s*/g, '<br><span class="action-circle">$1</span> ');
+
+  // set as HTML
+  document.getElementById('modal-description').innerHTML = desc;
+
   document.getElementById('spell-modal').style.display = 'block';
 }
 
@@ -436,6 +379,25 @@ window.addEventListener('click', e => {
   }
 });
 
+// Hamburger toggle for mobile
+const hamburgerBtn = document.getElementById('hamburger');
+const filterPanel = document.getElementById('filterPanel');
+hamburgerBtn.addEventListener('click', () => {
+  if (!filterPanel.style.display || filterPanel.style.display === 'flex') {
+    filterPanel.style.display = 'none';
+  } else {
+    filterPanel.style.display = 'flex';
+  }
+});
+
+// Apply filters
+document.getElementById('applyBtn').addEventListener('click', () => {
+  applyFiltersAndRender();
+  // On small screen, hide filter panel after applying
+  if (window.innerWidth < 768) {
+    filterPanel.style.display = 'none';
+  }
+});
 </script>
 </body>
 </html>
