@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle Spell Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        #spell-counts {
+            font-size: 18px;
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background: #333;
+            color: white;
+        }
+        input {
+            padding: 10px;
+            width: 80%;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Oracle Spell Viewer</h1>
+        <input type="text" id="search" placeholder="Search Spells..." onkeyup="filterSpells()">
+        <div id="spell-counts"></div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Level</th>
+                    <th>School</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody id="spell-list"></tbody>
+        </table>
+    </div>
+    
+    <script>
+        let spellsData = [];
+        
+        async function loadSpells() {
+            try {
+                const response = await fetch('spells.json');
+                const spells = await response.json();
+                
+                // Filter for Oracle + Divine spells (Cantrip, Level 1, Level 2)
+                spellsData = spells.filter(spell => 
+                    spell.traits?.includes("Oracle") && spell.traits?.includes("Divine") && 
+                    ["cantrip", "1", "2"].includes(spell.level)
+                );
+                
+                displayCounts();
+                displaySpells(spellsData);
+            } catch (error) {
+                console.error("Error loading spells:", error);
+            }
+        }
+
+        function displayCounts() {
+            const counts = { cantrip: 0, level1: 0, level2: 0 };
+            spellsData.forEach(spell => {
+                if (spell.level === "cantrip") counts.cantrip++;
+                else if (spell.level === "1") counts.level1++;
+                else if (spell.level === "2") counts.level2++;
+            });
+            
+            document.getElementById("spell-counts").innerHTML = `
+                <strong>Spell Counts:</strong> 
+                Cantrips: ${counts.cantrip}, Level 1: ${counts.level1}, Level 2: ${counts.level2}
+            `;
+        }
+
+        function displaySpells(spells) {
+            const spellList = document.getElementById("spell-list");
+            spellList.innerHTML = "";
+            spells.forEach(spell => {
+                const row = `<tr>
+                    <td>${spell.name}</td>
+                    <td>${spell.level}</td>
+                    <td>${spell.school}</td>
+                    <td>${spell.description.substring(0, 100)}...</td>
+                </tr>`;
+                spellList.innerHTML += row;
+            });
+        }
+        
+        function filterSpells() {
+            const query = document.getElementById("search").value.toLowerCase();
+            const filtered = spellsData.filter(spell => spell.name.toLowerCase().includes(query));
+            displaySpells(filtered);
+        }
+        
+        loadSpells();
+    </script>
+</body>
+</html>
