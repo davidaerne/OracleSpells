@@ -1,78 +1,147 @@
-/* Basic page styling */
+/* Make everything single-column and mobile-friendly */
+* {
+  box-sizing: border-box;
+}
+
 body {
+  margin: 0;
   font-family: Arial, sans-serif;
   background-color: #f4f4f4;
   color: #333;
-  margin: 0;
-  padding: 0;
 }
 
 header {
   background: #B71C1C;
   color: white;
-  padding: 1rem 0;
+  padding: 1rem;
   text-align: center;
 }
 
 .container {
-  max-width: 1200px;
-  margin: 20px auto;
-  padding: 20px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  max-width: 600px;
+  margin: 1rem auto;
+  padding: 1rem;
+  background: #fff;
+  border-radius: 8px;
 }
 
-.level-selector {
-  margin-bottom: 20px;
+/* Accordion Section */
+.accordion-item {
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  margin-bottom: 1rem;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: center;
-}
-
-th, td {
-  border: 1px solid #ccc;
-  padding: 8px;
-}
-
-td.slot-cell {
-  cursor: pointer;
-  background: #f9f9f9;
-}
-
-td.slot-cell:hover {
+.accordion-header {
   background: #eee;
+  padding: 1rem;
+  cursor: pointer;
+  border-radius: 5px 5px 0 0;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-/* Modal styling */
+.accordion-header:hover {
+  background: #ddd;
+}
+
+.accordion-content {
+  display: none;
+  padding: 0;
+  margin: 0;
+  border-top: 1px solid #ddd;
+}
+
+/* Active (open) content is visible */
+.accordion-content.active {
+  display: block;
+}
+
+/* Spell list inside the accordion */
+.spell-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.spell-list-item {
+  border-bottom: 1px solid #ddd;
+  padding: 0.8rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.spell-list-item:last-child {
+  border-bottom: none;
+}
+
+.spell-list-item .spell-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.spell-list-item .spell-level-label {
+  font-size: 0.8em;
+  color: #666;
+}
+
+.spell-list-item button {
+  background: none;
+  border: none;
+  font-size: 1.2em;
+  cursor: pointer;
+}
+
+/* Selected Spells */
+#selected-spells-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#selected-spells-list li {
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  margin-bottom: 0.5rem;
+  padding: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer; /* You can click it to open details */
+}
+
+/* Modal Overlay */
 .modal {
-  display: none; /* Hidden by default */
-  position: fixed; /* Stay in place */
-  z-index: 999; /* Sit on top */
+  display: none; /* hidden by default */
+  position: fixed; /* Sit on top */
+  z-index: 999;    /* Position above everything else */
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
-  overflow: auto; /* Enable scroll if needed */
-  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  overflow: auto;  /* Enable scroll if needed */
+  background-color: rgba(0,0,0,0.4); /* black with opacity */
 }
 
+/* Modal Content */
 .modal-content {
   background-color: #fff;
   margin: 10% auto;
-  padding: 20px;
-  border: 1px solid #888;
-  width: 50%;
-  border-radius: 10px;
+  padding: 1.5rem;
+  width: 90%;
+  max-width: 500px;
+  border-radius: 8px;
   position: relative;
 }
 
 .modal-close {
-  float: right;
-  font-size: 26px;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.4rem;
   font-weight: bold;
   cursor: pointer;
 }
@@ -81,31 +150,16 @@ td.slot-cell:hover {
   color: red;
 }
 
-/* Spell list in the modal */
-#modal-spell-list {
-  list-style: none;
-  padding: 0;
-  max-height: 300px;
-  overflow-y: auto;
-  border: 1px solid #ddd;
-  margin-top: 10px;
-  border-radius: 5px;
-}
-
-.spell-item {
-  background: #f9f9f9;
-  border-bottom: 1px solid #ccc;
-  padding: 10px;
-  display: flex;
-  justify-content: space-between;
-}
-
-.spell-item button {
-  background: #eee;
-  border: 1px solid #ccc;
+#modal-add-btn {
+  margin-top: 1rem;
+  background: #B71C1C;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1rem;
   border-radius: 5px;
   cursor: pointer;
 }
-.spell-item button:hover {
-  background: #ddd;
+
+#modal-add-btn:hover {
+  background: #a11a1a;
 }
