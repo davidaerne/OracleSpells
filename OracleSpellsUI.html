@@ -64,7 +64,7 @@
         
         async function loadSpells() {
             try {
-                const response = await fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/main/spells.json');
+                const response = await fetch('spells.json');
                 const spells = await response.json();
                 
                 // Apply JMESPath filtering
