@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <!-- Ensuring initial-scale=1.0 is set; also maximum-scale=1 to reduce zooming -->
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
   <title>Spell DB (Targets & Saving Throw, Single Collapse)</title>
   <style>
     body {
@@ -45,6 +46,13 @@
     .filter-panel input,
     .filter-panel select {
       padding: 0.25rem 0.5rem;
+      /* Increase font size to reduce iOS zoom on focus */
+      font-size: 16px; 
+    }
+    .filter-panel button {
+      font-size: 16px; /* Also helps reduce zooming on iOS */
+      padding: 0.4rem 0.75rem;
+      cursor: pointer;
     }
     .content {
       padding: 1rem;
@@ -197,6 +205,16 @@
       <option value="Cantrip">Cantrip</option>
     </select>
   </div>
+  <!-- New: Actions filter -->
+  <div>
+    <label for="actionSelect">Actions</label>
+    <select id="actionSelect">
+      <option value="All">All</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+    </select>
+  </div>
   <div>
     <label for="sortSelect">Sort By</label>
     <select id="sortSelect">
@@ -257,6 +275,7 @@ function applyFiltersAndRender() {
   const searchValue = document.getElementById('searchInput').value.toLowerCase();
   const typeValue = document.getElementById('typeSelect').value;
   const sortValue = document.getElementById('sortSelect').value;
+  const actionValue = document.getElementById('actionSelect').value; // NEW
 
   filteredSpells = allSpells.filter(spell => {
     // Filter for 'divine' or 'oracle'
@@ -281,6 +300,14 @@ function applyFiltersAndRender() {
     const inTrait = (spell.traits || []).some(t => t.toLowerCase().includes(searchValue));
     if (searchValue && !inName && !inTrait) return false;
 
+    // NEW: Actions filter
+    if (actionValue !== 'All') {
+      const aVal = parseInt(actionValue);
+      if (!doesSpellMatchActions(spell, aVal)) {
+        return false;
+      }
+    }
+
     return true;
   });
 
@@ -294,10 +321,29 @@ function applyFiltersAndRender() {
   renderCollapsibles(filteredSpells);
 }
 
+/* Helper to see if a spell can match the chosen number of actions. */
+function doesSpellMatchActions(spell, chosenActions) {
+  // If the spell has both an action and actionMax, interpret it as a range
+  const actionNum = spell.action ? parseInt(spell.action) : NaN;
+  const actionMaxNum = spell.actionMax ? parseInt(spell.actionMax) : NaN;
+
+  if (!isNaN(actionNum) && !isNaN(actionMaxNum)) {
+    // e.g. if action=1 and actionMax=3, any chosenActions in [1..3] is valid
+    return chosenActions >= actionNum && chosenActions <= actionMaxNum;
+  }
+  // If only one action number is provided:
+  if (!isNaN(actionNum) && isNaN(actionMaxNum)) {
+    return actionNum === chosenActions;
+  }
+  // If neither are valid, it doesn't match
+  return false;
+}
+
 /* Reset filters to defaults */
 document.getElementById('resetBtn').addEventListener('click', () => {
   document.getElementById('searchInput').value = '';
   document.getElementById('typeSelect').value = 'All';
+  document.getElementById('actionSelect').value = 'All'; // NEW
   document.getElementById('sortSelect').value = 'Level';
   applyFiltersAndRender();
 });
@@ -366,11 +412,11 @@ function renderCollapsibles(spells) {
         <div>
           ${
             spell.actionMax
-              ? `Actions: ${buildActionIcons(spell.actionMax)}`
-              : (spell.action ? `Actions: ${buildActionIcons(spell.action)}` : '')
+              ? \`Actions: \${buildActionIcons(spell.action)} to \${buildActionIcons(spell.actionMax)}\`
+              : (spell.action ? \`Actions: \${buildActionIcons(spell.action)}\` : '')
           }
         </div>
-        <div>${spell.range ? `Range: ${spell.range}` : ''}</div>
+        <div>${spell.range ? \`Range: \${spell.range}\` : ''}</div>
       `;
 
       itemDiv.appendChild(nameEl);
