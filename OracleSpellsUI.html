@@ -1,38 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Spell DB (Styled Modal)</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Spell DB (Heightened Newline + Alpha Sort)</title>
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       background-color: #f9f9f9;
     }
-    /* Simple header example */
+    /* Simple header */
     .header {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       background-color: #fff;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       padding: 0.5rem 1rem;
-      justify-content: space-between;
     }
     .header h1 {
       margin: 0;
       font-size: 1.25rem;
     }
     .hamburger {
-      display: none; /* hidden on desktop, shown on mobile via media query */
+      display: none; /* Shown on mobile via media query */
       cursor: pointer;
       font-size: 1.5rem;
       background: none;
       border: none;
       outline: none;
     }
-
-    /* Filter panel styling (hidden on mobile) */
     .filter-panel {
       background-color: #fff;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -49,11 +47,11 @@
     .filter-panel select {
       padding: 0.25rem 0.5rem;
     }
-
     .content {
       padding: 1rem;
     }
-    /* Collapsible styling (for spell list) */
+
+    /* Collapsible styling */
     .collapsible {
       background-color: #eee;
       color: #444;
@@ -70,9 +68,6 @@
     .collapsible:hover {
       background-color: #ddd;
     }
-    .active {
-      background-color: #ccc;
-    }
     .collapsible-content {
       display: none;
       overflow: hidden;
@@ -80,8 +75,6 @@
       margin-bottom: 10px;
       padding: 0 18px;
     }
-
-    /* Each spell in the collapsible */
     .spell-item {
       border-bottom: 1px solid #ddd;
       padding: 10px 0;
@@ -97,8 +90,6 @@
       font-style: italic;
       color: #888;
     }
-
-    /* Extra row for actions & range, if desired */
     .spell-extra-row {
       display: flex;
       justify-content: space-between;
@@ -106,8 +97,6 @@
       font-size: 0.9rem;
       color: #444;
     }
-
-    /* Action circles */
     .action-circle {
       display: inline-block;
       width: 1.3em;
@@ -122,30 +111,27 @@
       margin: 0 4px;
     }
 
-    /* ----------------------
-       Modal Window
-       ---------------------- */
+    /* Modal styling */
     .modal {
-      display: none; 
-      position: fixed; 
-      z-index: 9999; 
-      left: 0; 
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
       top: 0;
-      width: 100%; 
-      height: 100%; 
-      overflow: auto; 
+      width: 100%;
+      height: 100%;
+      overflow: auto;
       background-color: rgba(0,0,0,0.4);
     }
     .modal-content {
       background-color: #fff;
-      margin: 5% auto; /* center it */
+      margin: 5% auto;
       padding: 20px;
       border-radius: 6px;
       width: 90%;
       max-width: 600px;
       position: relative;
     }
-    /* The close (X) button */
     .close-modal {
       position: absolute;
       right: 16px;
@@ -157,32 +143,32 @@
     .close-modal:hover {
       color: #999;
     }
-    /* The modal content details */
     .modal-content h2 {
       margin-top: 0;
       margin-bottom: 0.5rem;
       font-size: 1.25rem;
     }
-    /* Level and traits below the title */
-    #modal-level,
+    #modal-level {
+      margin-bottom: 0.5rem;
+      color: #555;
+      font-size: 0.95rem;
+    }
     #modal-traits {
       margin-bottom: 0.5rem;
       color: #555;
       font-size: 0.95rem;
     }
-    /* If you want each field to have a label + content style */
     .modal-field-label {
       font-weight: bold;
       margin-top: 1rem;
       margin-bottom: 0.25rem;
     }
-    /* Basic margin for the content */
     .modal-field-content {
       margin-bottom: 0.5rem;
       line-height: 1.4;
     }
 
-    /* Show hamburger & hide filter panel on small screens */
+    /* Mobile / responsive */
     @media (max-width: 768px) {
       .hamburger {
         display: block;
@@ -197,13 +183,11 @@
 </head>
 <body>
 
-<!-- Header -->
 <div class="header">
   <h1>Spell DB</h1>
   <button class="hamburger" id="hamburger">&#9776;</button>
 </div>
 
-<!-- Filter panel -->
 <div class="filter-panel" id="filterPanel">
   <div>
     <label for="searchInput">Search</label>
@@ -227,7 +211,6 @@
   <button id="applyBtn">Apply</button>
 </div>
 
-<!-- Main content -->
 <div class="content">
   <div id="spell-container"></div>
 </div>
@@ -240,7 +223,6 @@
     <div id="modal-level"></div>
     <div id="modal-traits"></div>
 
-    <!-- Example of labeled sections:  -->
     <div class="modal-field-label">Cast</div>
     <div id="modal-cast" class="modal-field-content"></div>
 
@@ -256,7 +238,7 @@
 let allSpells = [];
 let filteredSpells = [];
 
-// 1) Fetch spells
+/* ----------- FETCH SPELLS ----------- */
 fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/refs/heads/main/spells.json')
   .then(res => res.json())
   .then(data => {
@@ -265,26 +247,31 @@ fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/refs/heads/main
   })
   .catch(err => console.error('Fetch error:', err));
 
-// 2) Filter & sort
+/* ----------- FILTER & SORT ----------- */
 function applyFiltersAndRender() {
   const searchValue = document.getElementById('searchInput').value.toLowerCase();
   const typeValue = document.getElementById('typeSelect').value;
   const sortValue = document.getElementById('sortSelect').value;
 
   filteredSpells = allSpells.filter(spell => {
-    // Filter for 'divine' or 'oracle' if desired:
+    // Still filtering for "divine" or "oracle"
     const traditions = (spell.traditions || []).map(t => t.toLowerCase());
     const traits = (spell.traits || []).map(t => t.toLowerCase());
     const combined = [...traditions, ...traits];
-    if (!combined.includes('divine') && !combined.includes('oracle')) return false;
+    if (!combined.includes('divine') && !combined.includes('oracle')) {
+      return false;
+    }
 
     // Type filter
     let matchesType = true;
-    if (typeValue === 'Cantrip') matchesType = isCantrip(spell);
-    else if (typeValue === 'Spell') matchesType = !isCantrip(spell);
+    if (typeValue === 'Cantrip') {
+      matchesType = isCantrip(spell);
+    } else if (typeValue === 'Spell') {
+      matchesType = !isCantrip(spell);
+    }
     if (!matchesType) return false;
 
-    // Search by name or trait
+    // Search in name or trait
     const inName = spell.name.toLowerCase().includes(searchValue);
     const inTrait = (spell.traits || []).some(t => t.toLowerCase().includes(searchValue));
     if (searchValue && !inName && !inTrait) return false;
@@ -314,7 +301,7 @@ function getSpellLevel(spell) {
   return isNaN(parsed) ? -1 : parsed;
 }
 
-// 3) Render the spells in collapsibles
+/* ---------- RENDER COLLAPSIBLES, ALPHABETICAL WITHIN LEVEL ---------- */
 function renderCollapsibles(spells) {
   const container = document.getElementById('spell-container');
   container.innerHTML = '';
@@ -327,42 +314,50 @@ function renderCollapsibles(spells) {
     levelMap[lvl].push(sp);
   });
 
+  // Sort the levels in ascending order
   const sortedLevels = Object.keys(levelMap)
     .map(Number)
     .sort((a,b) => a - b);
 
   sortedLevels.forEach(lvl => {
+    // 1) Collapsible button for the level
     const btn = document.createElement('button');
     btn.classList.add('collapsible');
     btn.textContent = (lvl === 0 ? 'Cantrips' : `Level ${lvl}`);
 
+    // 2) Collapsible content
     const contentDiv = document.createElement('div');
     contentDiv.classList.add('collapsible-content');
 
+    // Alphabetical sort of spells within this level
+    levelMap[lvl].sort((a,b) => a.name.localeCompare(b.name));
+
+    // Fill content with spells
     levelMap[lvl].forEach(spell => {
       const itemDiv = document.createElement('div');
       itemDiv.classList.add('spell-item');
 
-      // Name
       const nameEl = document.createElement('div');
       nameEl.classList.add('spell-name');
       nameEl.textContent = spell.name;
 
-      // Traits
       const traitsEl = document.createElement('div');
       traitsEl.classList.add('spell-traits');
       traitsEl.textContent = `Traits: ${(spell.traits || []).join(', ')}`;
 
-      // Example row for actions & range:
+      // If you want "Actions" & "Range" displayed
       const extraRow = document.createElement('div');
       extraRow.classList.add('spell-extra-row');
       extraRow.innerHTML = `
         <div>
-          ${ spell.actionMax ? `Actions: ${buildActionIcons(spell.actionMax)}` 
-            : (spell.action ? `Actions: ${buildActionIcons(spell.action)}` : '')}
+          ${
+            spell.actionMax
+              ? `Actions: ${buildActionIcons(spell.actionMax)}`
+              : (spell.action ? `Actions: ${buildActionIcons(spell.action)}` : '')
+          }
         </div>
         <div>
-          ${ spell.range ? `Range: ${spell.range}` : '' }
+          ${spell.range ? `Range: ${spell.range}` : ''}
         </div>
       `;
 
@@ -370,19 +365,15 @@ function renderCollapsibles(spells) {
       itemDiv.appendChild(traitsEl);
       itemDiv.appendChild(extraRow);
 
-      // Click -> open modal
+      // Clicking a spell opens modal
       itemDiv.addEventListener('click', () => openSpellModal(spell));
-
       contentDiv.appendChild(itemDiv);
     });
 
     // Collapsible toggle
     btn.addEventListener('click', () => {
-      if (contentDiv.style.display === 'block') {
-        contentDiv.style.display = 'none';
-      } else {
-        contentDiv.style.display = 'block';
-      }
+      contentDiv.style.display =
+        (contentDiv.style.display === 'block') ? 'none' : 'block';
     });
 
     container.appendChild(btn);
@@ -390,26 +381,23 @@ function renderCollapsibles(spells) {
   });
 }
 
-// Action icons
+/* Convert digits in "action" string to circles */
 function buildActionIcons(str) {
   return str.replace(/\d+/g, m => `<span class="action-circle">${m}</span>`);
 }
 
-// 4) Open the modal with some styling & text replacements
+/* ---------- OPEN MODAL WITH HEIGHTENED FIX ---------- */
 function openSpellModal(spell) {
-  // Title
   document.getElementById('modal-title').textContent = spell.name;
 
-  // Spell Level
   const lvl = getSpellLevel(spell);
   document.getElementById('modal-level').textContent =
     (lvl >= 0 ? `Spell Level ${lvl}` : '');
 
-  // Traits
   document.getElementById('modal-traits').textContent =
     `Traits: ${(spell.traits || []).join(', ')}`;
 
-  // If you want to show cast/range in the modal:
+  // Build cast string
   let castString = '';
   if (spell.action) {
     if (spell.actionMax) {
@@ -418,52 +406,57 @@ function openSpellModal(spell) {
       castString += `Actions: ${buildActionIcons(spell.action)}`;
     }
   }
+  // Skip if "cast" is literally "to"
   if (spell.cast && spell.cast.toLowerCase() !== 'to') {
     castString += (castString ? ' ' : '') + spell.cast;
   }
-  document.getElementById('modal-cast').innerHTML = castString || '(No cast info)';
+  document.getElementById('modal-cast').innerHTML = castString || '(No action info)';
 
+  // Range
   document.getElementById('modal-range').textContent = spell.range || '(No range specified)';
 
-  // Description: parse for bold + line breaks
+  // Description formatting
   let desc = spell.description || '(No description)';
-  // **text** -> <strong>text</strong>
+
+  // Bold
   desc = desc.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  // |X| -> line break + circle
+  // New line before each "Heightened (X)" or "Heightened (+X)"
+  desc = desc.replace(/(Heightened\s*\(\+?\d+\)|Heightened\s*\(\d+(?:st|nd|rd|th)\))/gi, '<br>$1');
+  // Also handle your "|1|" action circles if needed:
   desc = desc.replace(/\|(\d+)\|\s*/g, '<br><span class="action-circle">$1</span> ');
+
   document.getElementById('modal-description').innerHTML = desc;
 
   // Show modal
   document.getElementById('spell-modal').style.display = 'block';
 }
 
-// Close modal
+/* Close Modal */
 document.getElementById('close-modal').addEventListener('click', () => {
   document.getElementById('spell-modal').style.display = 'none';
 });
 window.addEventListener('click', e => {
-  const modal = document.getElementById('spell-modal');
-  if (e.target === modal) {
-    modal.style.display = 'none';
+  if(e.target === document.getElementById('spell-modal')){
+    document.getElementById('spell-modal').style.display = 'none';
   }
 });
 
-// Mobile hamburger toggle
+/* Hamburger toggle for mobile */
 const hamburgerBtn = document.getElementById('hamburger');
 const filterPanel = document.getElementById('filterPanel');
 hamburgerBtn.addEventListener('click', () => {
-  if (!filterPanel.style.display || filterPanel.style.display === 'flex') {
+  if(!filterPanel.style.display || filterPanel.style.display === 'flex'){
     filterPanel.style.display = 'none';
   } else {
     filterPanel.style.display = 'flex';
   }
 });
 
-// Apply filters
+/* Apply filters */
 document.getElementById('applyBtn').addEventListener('click', () => {
   applyFiltersAndRender();
-  // On small screen, hide filter panel after applying
-  if (window.innerWidth < 768) {
+  // Hide filter panel on mobile after applying
+  if(window.innerWidth < 768) {
     filterPanel.style.display = 'none';
   }
 });
