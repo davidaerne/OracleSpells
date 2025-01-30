@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>PF2e Oracle/Divine Spells (Actions in List, "Spell Level" in Modal)</title>
+  <title>PF2e Oracle/Divine Spells (Actions/Range Columns)</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -59,14 +59,24 @@
       color: #888;
     }
 
-    /* Let’s style the extra info: “Actions” + “Range” in the collapsible list */
-    .spell-extra-info {
+    /*
+      Flex row for Actions and Range
+      We'll display them side by side in 2 columns.
+    */
+    .spell-extra-row {
+      display: flex;
+      justify-content: space-between; /* space on left & right edges */
       margin-top: 4px;
       font-size: 0.9rem;
       color: #444;
     }
-    .spell-extra-info span {
-      margin-right: 10px;
+    .spell-extra-col {
+      /* Let each column take up auto width; you can adjust as needed. */
+      flex: 1;
+    }
+    /* Just a little alignment tweak so Range is right-aligned. */
+    .spell-range-col {
+      text-align: right;
     }
 
     /* Modal overlay */
@@ -175,13 +185,13 @@
 
 <script>
 /**
- * 1) Fetch the JSON from GitHub
- * 2) Filter for spells with 'divine' or 'oracle'
- * 3) Group them by level (0 if cantrip)
- * 4) Sort by name
- * 5) Render collapsibles (only one open)
- * 6) Show max action & range in the collapsible
- * 7) In modal, rename "Spell 1" -> "Spell Level 1"
+ * 1) Fetch from GitHub
+ * 2) Filter for 'divine' or 'oracle'
+ * 3) Group by level (0 if cantrip)
+ * 4) Sort alpha by name
+ * 5) Render collapsibles
+ * 6) Show actions + range in columns
+ * 7) Show "Spell Level X" in modal, etc.
  */
 
 fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/refs/heads/main/spells.json')
@@ -203,22 +213,20 @@ function filterSpells(spells) {
   });
 }
 
-// If cantrip, we treat level as 0
 function isCantrip(spell) {
-  const traitsLower = (spell.traits || []).map(x => x.toLowerCase());
-  const typeLower = (spell.type || '').toLowerCase();
-  return traitsLower.includes('cantrip') || typeLower === 'cantrip';
+  const t = (spell.traits || []).map(x => x.toLowerCase());
+  const ty = (spell.type || '').toLowerCase();
+  return t.includes('cantrip') || ty === 'cantrip';
 }
 
-// Group spells by level
 function groupByLevel(spells) {
   const groups = {};
   spells.forEach(spell => {
     let lvl = 0;
     if (!isCantrip(spell)) {
       const parsed = parseInt(spell.level, 10);
-      if (!isNaN(parsed)) lvl = parsed; 
-      else lvl = -1; 
+      if (!isNaN(parsed)) lvl = parsed;
+      else lvl = -1;
     }
     if (!groups[lvl]) groups[lvl] = [];
     groups[lvl].push(spell);
@@ -226,24 +234,21 @@ function groupByLevel(spells) {
   return groups;
 }
 
-// For the collapsible, we only allow one open at a time
 let currentlyOpen = null;
-
-// Renders the collapsibles
 function renderCollapsibles(groupedSpells) {
   const container = document.getElementById('spell-container');
   const sortedLevels = Object.keys(groupedSpells)
     .map(Number)
-    .sort((a, b) => a - b);
+    .sort((a,b) => a - b);
 
   sortedLevels.forEach(level => {
     const spellsAtLevel = groupedSpells[level];
-    // Sort by name (alphabetically)
-    spellsAtLevel.sort((a, b) => a.name.localeCompare(b.name));
+    // Sort alpha by name
+    spellsAtLevel.sort((a,b) => a.name.localeCompare(b.name));
 
     const button = document.createElement('button');
     button.classList.add('collapsible');
-    button.textContent = level === 0 ? 'Cantrips' : `Level ${level}`;
+    button.textContent = (level === 0 ? 'Cantrips' : `Level ${level}`);
 
     const contentDiv = document.createElement('div');
     contentDiv.classList.add('collapsible-content');
@@ -252,47 +257,60 @@ function renderCollapsibles(groupedSpells) {
       const spellDiv = document.createElement('div');
       spellDiv.classList.add('spell-item');
 
-      // Spell name
+      // Name
       const nameEl = document.createElement('div');
       nameEl.classList.add('spell-name');
       nameEl.textContent = spell.name;
 
-      // Spell traits
+      // Traits
       const traitsEl = document.createElement('div');
       traitsEl.classList.add('spell-traits');
-      traitsEl.textContent = `Traits: ${(spell.traits || []).join(', ')}`;
+      traitsEl.textContent = `Traits: ${ (spell.traits || []).join(', ') }`;
 
-      // 1) Show the max action (circle) & range
-      const extraEl = document.createElement('div');
-      extraEl.classList.add('spell-extra-info');
+      // Row with 2 columns: Actions on the left, Range on the right
+      const extraRow = document.createElement('div');
+      extraRow.classList.add('spell-extra-row');
 
-      // If there's an actionMax, show "Actions: <circle>"
+      // Left column: Actions
+      const actionsCol = document.createElement('div');
+      actionsCol.classList.add('spell-extra-col');
+      // If actionMax is present, show it. Otherwise show nothing or single action?
       if (spell.actionMax) {
-        extraEl.innerHTML += `<span>Actions: ${buildActionIcons(spell.actionMax)}</span>`;
+        // e.g. "Actions: ③" 
+        actionsCol.innerHTML = `Actions: ${ buildActionIcons(spell.actionMax) }`;
+      } else {
+        // If you want to show a single action or skip entirely:
+        // actionsCol.innerHTML = (spell.action) ? `Actions: ${ buildActionIcons(spell.action) }` : '';
+        // Or just skip if there's no actionMax
+        if(spell.action){
+          actionsCol.innerHTML = `Actions: ${ buildActionIcons(spell.action) }`;
+        }
       }
-      // Then show Range if present
-      if (spell.range) {
-        extraEl.innerHTML += `<span>Range: ${spell.range}</span>`;
-      }
+
+      // Right column: Range
+      const rangeCol = document.createElement('div');
+      rangeCol.classList.add('spell-extra-col', 'spell-range-col');
+      rangeCol.textContent = spell.range ? `Range: ${spell.range}` : '';
+
+      extraRow.appendChild(actionsCol);
+      extraRow.appendChild(rangeCol);
 
       spellDiv.appendChild(nameEl);
       spellDiv.appendChild(traitsEl);
-      spellDiv.appendChild(extraEl);
+      spellDiv.appendChild(extraRow);
 
-      // Clicking the row opens the modal
+      // On click -> modal
       spellDiv.addEventListener('click', () => openSpellModal(spell));
 
       contentDiv.appendChild(spellDiv);
     });
 
-    // Collapse logic
-    button.addEventListener('click', function() {
-      // close other open
-      if (currentlyOpen && currentlyOpen !== contentDiv) {
+    // Toggle logic
+    button.addEventListener('click', function(){
+      if(currentlyOpen && currentlyOpen !== contentDiv){
         currentlyOpen.style.display = 'none';
       }
-      // toggle
-      if (contentDiv.style.display === 'block') {
+      if(contentDiv.style.display === 'block'){
         contentDiv.style.display = 'none';
         currentlyOpen = null;
       } else {
@@ -306,50 +324,47 @@ function renderCollapsibles(groupedSpells) {
   });
 }
 
-// Replaces digits with <span class="action-circle">N</span>
-function buildActionIcons(str) {
-  return str.replace(/\d+/g, match => `<span class="action-circle">${match}</span>`);
+function buildActionIcons(str){
+  return str.replace(/\d+/g, m => `<span class="action-circle">${m}</span>`);
 }
 
-// Opens the modal
-function openSpellModal(spell) {
-  // Title
+function openSpellModal(spell){
   document.getElementById('modal-title').textContent = spell.name || 'Unknown Spell';
 
-  // Instead of "Spell 1", do "Spell Level 1"
-  let lvlTxt = '';
-  if (!isCantrip(spell)) {
-    const parsed = parseInt(spell.level, 10);
-    if (!isNaN(parsed)) {
-      lvlTxt = `Spell Level ${parsed}`;
+  // "Spell Level X"
+  let lvlText = '';
+  if(!isCantrip(spell)){
+    const p = parseInt(spell.level, 10);
+    if(!isNaN(p)){
+      lvlText = `Spell Level ${p}`;
     }
   }
-  document.getElementById('modal-level').textContent = lvlTxt;
+  document.getElementById('modal-level').textContent = lvlText;
 
   // Traits as tags
-  const traitsContainer = document.getElementById('modal-traits');
-  traitsContainer.innerHTML = '';
+  const traitsDiv = document.getElementById('modal-traits');
+  traitsDiv.innerHTML = '';
   (spell.traits || []).forEach(tr => {
     const tag = document.createElement('span');
     tag.classList.add('trait-tag');
     tag.textContent = tr;
-    traitsContainer.appendChild(tag);
+    traitsDiv.appendChild(tag);
   });
 
   // Traditions
   document.getElementById('modal-traditions').textContent =
     (spell.traditions || []).join(', ');
 
-  // Cast line
+  // Build cast line
   let castString = '';
-  if (spell.action) {
-    if (spell.actionMax) {
-      castString += 'Actions: ' + buildActionIcons(spell.action) + ' to ' + buildActionIcons(spell.actionMax);
+  if(spell.action){
+    if(spell.actionMax){
+      castString += `Actions: ${buildActionIcons(spell.action)} to ${buildActionIcons(spell.actionMax)}`;
     } else {
-      castString += 'Actions: ' + buildActionIcons(spell.action);
+      castString += `Actions: ${buildActionIcons(spell.action)}`;
     }
   }
-  if (spell.cast && spell.cast.toLowerCase() !== 'to') {
+  if(spell.cast && spell.cast.toLowerCase() !== 'to'){
     castString += (castString ? ' ' : '') + spell.cast;
   }
   document.getElementById('modal-cast').innerHTML = castString || '(No action info)';
@@ -357,7 +372,7 @@ function openSpellModal(spell) {
   // Range
   document.getElementById('modal-range').textContent = spell.range || '(No range specified)';
 
-  // Description: parse for bold + action circles
+  // Description
   let desc = spell.description || '(No description)';
   desc = desc.replace(/\*\*(.*?)\*\*/g, '<br><strong>$1</strong><br>');
   desc = desc.replace(/\|(\d+)\|\s*/g, '<br><span class="action-circle">$1</span> ');
@@ -367,14 +382,14 @@ function openSpellModal(spell) {
   document.getElementById('spell-modal').style.display = 'block';
 }
 
-// Close the modal
-document.getElementById('close-modal').addEventListener('click', () => {
-  document.getElementById('spell-modal').style.display = 'none';
+// Close modal
+document.getElementById('close-modal').addEventListener('click', ()=>{
+  document.getElementById('spell-modal').style.display='none';
 });
 window.addEventListener('click', e => {
   const modal = document.getElementById('spell-modal');
-  if (e.target === modal) {
-    modal.style.display = 'none';
+  if(e.target === modal){
+    modal.style.display='none';
   }
 });
 </script>
