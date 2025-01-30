@@ -1,4 +1,4 @@
-/* Make everything single-column and mobile-friendly */
+/* Make sure the layout is single-column and mobile-friendly */
 * {
   box-sizing: border-box;
 }
@@ -6,13 +6,13 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background-color: #f4f4f4;
+  background: #f4f4f4;
   color: #333;
 }
 
 header {
   background: #B71C1C;
-  color: white;
+  color: #fff;
   padding: 1rem;
   text-align: center;
 }
@@ -20,117 +20,88 @@ header {
 .container {
   max-width: 600px;
   margin: 1rem auto;
-  padding: 1rem;
   background: #fff;
   border-radius: 8px;
-}
-
-/* Accordion Section */
-.accordion-item {
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  margin-bottom: 1rem;
-}
-
-.accordion-header {
-  background: #eee;
   padding: 1rem;
-  cursor: pointer;
-  border-radius: 5px 5px 0 0;
+}
+
+/* Each "slot level" block */
+.level-block {
+  margin-bottom: 1.5rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.level-header {
+  background: #eee;
+  padding: 0.8rem;
   font-weight: bold;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  border-bottom: 1px solid #ddd;
 }
 
-.accordion-header:hover {
-  background: #ddd;
-}
-
-.accordion-content {
-  display: none;
-  padding: 0;
-  margin: 0;
-  border-top: 1px solid #ddd;
-}
-
-/* Active (open) content is visible */
-.accordion-content.active {
-  display: block;
-}
-
-/* Spell list inside the accordion */
-.spell-list {
+.slot-list {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.spell-list-item {
-  border-bottom: 1px solid #ddd;
-  padding: 0.8rem 1rem;
+.slot-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0.8rem;
+  border-bottom: 1px solid #ddd;
 }
 
-.spell-list-item:last-child {
+.slot-item:last-child {
   border-bottom: none;
 }
 
-.spell-list-item .spell-info {
+.slot-item .slot-info {
   display: flex;
   flex-direction: column;
+  cursor: pointer; /* so user can tap it to view details in the modal */
 }
 
-.spell-list-item .spell-level-label {
-  font-size: 0.8em;
-  color: #666;
+.slot-name {
+  font-weight: bold;
 }
 
-.spell-list-item button {
-  background: none;
-  border: none;
-  font-size: 1.2em;
+.slot-action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.slot-action-buttons button {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  background: #eee;
   cursor: pointer;
 }
 
-/* Selected Spells */
-#selected-spells-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.slot-action-buttons button:hover {
+  background: #ccc;
 }
 
-#selected-spells-list li {
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  margin-bottom: 0.5rem;
-  padding: 0.8rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer; /* You can click it to open details */
-}
-
-/* Modal Overlay */
+/* Modal overlay */
 .modal {
   display: none; /* hidden by default */
-  position: fixed; /* Sit on top */
-  z-index: 999;    /* Position above everything else */
-  left: 0;
-  top: 0;
-  width: 100%;
+  position: fixed; 
+  z-index: 999; 
+  left: 0; top: 0; 
+  width: 100%; 
   height: 100%;
-  overflow: auto;  /* Enable scroll if needed */
-  background-color: rgba(0,0,0,0.4); /* black with opacity */
+  overflow: auto; /* scroll if needed */
+  background-color: rgba(0,0,0,0.4);
 }
 
-/* Modal Content */
+/* Modal content box */
 .modal-content {
-  background-color: #fff;
+  background: #fff;
   margin: 10% auto;
-  padding: 1.5rem;
+  padding: 1.2rem;
   width: 90%;
   max-width: 500px;
   border-radius: 8px;
@@ -139,9 +110,9 @@ header {
 
 .modal-close {
   position: absolute;
-  top: 1rem;
+  top: 0.8rem;
   right: 1rem;
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   font-weight: bold;
   cursor: pointer;
 }
@@ -150,7 +121,7 @@ header {
   color: red;
 }
 
-#modal-add-btn {
+#modal-assign-btn {
   margin-top: 1rem;
   background: #B71C1C;
   color: #fff;
@@ -160,6 +131,6 @@ header {
   cursor: pointer;
 }
 
-#modal-add-btn:hover {
+#modal-assign-btn:hover {
   background: #a11a1a;
 }
