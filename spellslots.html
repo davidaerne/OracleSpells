@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+  <title>PF2e Spell Slots Demo</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+    }
+    header {
+      background-color: #fff;
+      padding: 1rem;
+      border-bottom: 1px solid #ddd;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .header-title {
+      font-size: 1.25rem;
+      font-weight: bold;
+      margin: 0;
+    }
+    main {
+      padding: 1rem;
+    }
+    .level-select-row {
+      margin-bottom: 1rem;
+    }
+    .slot-group {
+      margin-bottom: 1rem;
+      border: 1px solid #ddd;
+      background-color: #fff;
+      padding: 1rem;
+      border-radius: 4px;
+    }
+    .slot-group-title {
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+    }
+    .slot-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .spell-slot {
+      width: 120px;
+      height: 50px;
+      background-color: #eee;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 0.9rem;
+      text-align: center;
+      padding: 0.5rem;
+      box-sizing: border-box;
+    }
+    .spell-slot.selected {
+      background-color: #cceaff; /* highlight a slot that has a spell */
+    }
+    .spell-slot .heightened-label {
+      display: block;
+      margin-top: 4px;
+      font-weight: bold;
+      color: #d00;  /* red text for "Heightened" */
+    }
+
+    /* Spell select overlay for picking a spell from the list */
+    .modal-overlay {
+      display: none; 
+      position: fixed; 
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 999; 
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal-choose-content {
+      background-color: #fff;
+      width: 90%;
+      max-width: 600px;
+      border-radius: 6px;
+      padding: 1rem;
+      overflow-y: auto; 
+      max-height: 80vh;
+      box-sizing: border-box;
+    }
+    .choose-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .choose-header h2 {
+      margin: 0;
+      font-size: 1.25rem;
+    }
+    .choose-close {
+      background: none; 
+      border: none; 
+      font-size: 1.2rem; 
+      cursor: pointer;
+      color: #999;
+    }
+    .choose-spell-item {
+      border-bottom: 1px solid #ddd;
+      padding: 0.5rem 0;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .choose-spell-item:last-child {
+      border-bottom: none;
+    }
+    .choose-spell-item:hover {
+      background-color: #f1f1f1;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1 class="header-title">PF2e Spell Slots</h1>
+</header>
+
+<main>
+  <div class="level-select-row">
+    <label for="characterLevel">Character Level:</label>
+    <select id="characterLevel" onchange="onLevelChange()">
+      <!-- Just an example from levels 1 to 20 -->
+      <option value="1">Level 1</option>
+      <option value="2">Level 2</option>
+      <option value="3">Level 3</option>
+      <option value="4">Level 4</option>
+      <option value="5" selected>Level 5</option>
+      <option value="6">Level 6</option>
+      <option value="7">Level 7</option>
+      <option value="8">Level 8</option>
+      <option value="9">Level 9</option>
+      <option value="10">Level 10</option>
+      <option value="11">Level 11</option>
+      <option value="12">Level 12</option>
+      <option value="13">Level 13</option>
+      <option value="14">Level 14</option>
+      <option value="15">Level 15</option>
+      <option value="16">Level 16</option>
+      <option value="17">Level 17</option>
+      <option value="18">Level 18</option>
+      <option value="19">Level 19</option>
+      <option value="20">Level 20</option>
+    </select>
+  </div>
+
+  <div id="slotContainer"></div>
+</main>
+
+<!-- Spell chooser overlay -->
+<div id="chooseSpellModal" class="modal-overlay">
+  <div class="modal-choose-content">
+    <div class="choose-header">
+      <h2>Select a Spell</h2>
+      <button class="choose-close" onclick="closeChooseModal()">✕</button>
+    </div>
+    <div id="chooseSpellList"></div>
+  </div>
+</div>
+
+<script>
+// We'll do a simple approach:
+// 1) We fetch your spells from GitHub.
+// 2) We figure out how many "slots" you get at a certain character level (example data).
+// 3) We store the chosen spells in localStorage, keyed by "slot_<level>_<index>" etc.
+// 4) If you place a lower-level spell in a higher-level slot (and it can be heightened), 
+//    we display "Heightened" in that slot's label.
+
+let allSpells = [];
+let chosenSpells = {}; // e.g. { "slot_0_0": {...}, "slot_1_2": {...} }
+let currentCharacterLevel = 5;
+
+// We'll define how many slots at each level for demonstration:
+let slotData = []; // e.g. [ { slotLevel: 0, label: 'Cantrip', count: 5 }, {...} ]
+
+let selectingSlotKey = null; // which slot user is picking for
+
+// 1) fetch spells
+fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/refs/heads/main/spells.json')
+  .then(r=>r.json())
+  .then(data=>{
+    allSpells = data;
+    loadFromLocalStorage();
+    onLevelChange(); // default load
+  })
+  .catch(err=>console.error("Error fetching spells:",err));
+
+// restore from localStorage
+function loadFromLocalStorage() {
+  const saved = localStorage.getItem('chosenSlots');
+  if(saved) {
+    chosenSpells = JSON.parse(saved);
+  }
+}
+
+function saveToLocalStorage() {
+  localStorage.setItem('chosenSlots', JSON.stringify(chosenSpells));
+}
+
+// 2) define slot counts for each level
+function onLevelChange() {
+  const levelSelect = document.getElementById('characterLevel');
+  currentCharacterLevel = parseInt(levelSelect.value,10) || 1;
+
+  // Minimal example logic. You can expand for levels 6,7,etc.
+  // "slotLevel" is the actual spell level for the slot.
+  // "count" is how many slots of that level.
+  slotData = [
+    { slotLevel: 0, label: 'Cantrip', count: 5 },
+    { slotLevel: 1, label: 'Level 1', count: (currentCharacterLevel>=1 ? 2 : 0) },
+    { slotLevel: 2, label: 'Level 2', count: (currentCharacterLevel>=3 ? 2 : 0) },
+    { slotLevel: 3, label: 'Level 3', count: (currentCharacterLevel>=5 ? 2 : 0) },
+    { slotLevel: 4, label: 'Level 4', count: (currentCharacterLevel>=7 ? 2 : 0) },
+    { slotLevel: 5, label: 'Level 5', count: (currentCharacterLevel>=9 ? 2 : 0) },
+    // add more if you want (6,7,8,9)
+  ];
+
+  renderSlots();
+}
+
+// 3) render the slot groups
+function renderSlots() {
+  const container = document.getElementById('slotContainer');
+  container.innerHTML = '';
+
+  slotData.forEach(sd=>{
+    if(sd.count>0) {
+      const groupDiv=document.createElement('div');
+      groupDiv.classList.add('slot-group');
+
+      const title=document.createElement('div');
+      title.classList.add('slot-group-title');
+      title.textContent = sd.label;
+      groupDiv.appendChild(title);
+
+      const slotList=document.createElement('div');
+      slotList.classList.add('slot-list');
+
+      for(let i=0; i<sd.count; i++) {
+        const slotKey=`slot_${sd.slotLevel}_${i}`;
+        const slotDiv=document.createElement('div');
+        slotDiv.classList.add('spell-slot');
+
+        // if user has chosen a spell for this slot, show it
+        if(chosenSpells[slotKey]) {
+          slotDiv.classList.add('selected');
+          slotDiv.innerHTML = formatSlotLabel(chosenSpells[slotKey], sd.slotLevel);
+        } else {
+          slotDiv.textContent = '(empty)';
+        }
+
+        slotDiv.addEventListener('click', ()=>{
+          if(chosenSpells[slotKey]) {
+            // if slot is already used, ask if we want to remove
+            if(confirm("Remove this spell from the slot?")) {
+              delete chosenSpells[slotKey];
+              saveToLocalStorage();
+              renderSlots();
+            }
+          } else {
+            // pick a new spell
+            selectingSlotKey = slotKey;
+            openChooseModal(sd.slotLevel);
+          }
+        });
+
+        slotList.appendChild(slotDiv);
+      }
+
+      groupDiv.appendChild(slotList);
+      container.appendChild(groupDiv);
+    }
+  });
+}
+
+/** 
+ * formatSlotLabel(spell, slotLevel):
+ * If the spell's level < slotLevel and the spell has "heightened" text in its description,
+ * we display "Heightened".
+ */
+function formatSlotLabel(spell, slotLevel) {
+  let s = `<div>${spell.name}</div>`;
+  const spellLvl = getSpellLevel(spell);
+
+  if(spellLvl >= 0 && spellLvl < slotLevel) {
+    // check if the spell can be heightened
+    if(spell.description && spell.description.toLowerCase().includes('heightened')) {
+      s += `<div class="heightened-label">Heightened</div>`;
+    }
+  }
+  return s;
+}
+
+// a helper to figure out a spell's level
+function getSpellLevel(spell) {
+  // cantrip => 0
+  const isCantrip = (spell.traits||[]).map(t=>t.toLowerCase()).includes('cantrip')
+                 || (spell.type||'').toLowerCase()==='cantrip';
+  if(isCantrip) return 0;
+  const lvl = parseInt(spell.level,10);
+  return isNaN(lvl)? -1 : lvl;
+}
+
+// 4) choose a spell for a slot
+function openChooseModal(slotLevel) {
+  // build the list of spells in #chooseSpellList
+  const chooseList = document.getElementById('chooseSpellList');
+  chooseList.innerHTML='';
+
+  // sort spells by name
+  allSpells.sort((a,b)=>a.name.localeCompare(b.name));
+
+  // display them all (or filter for "divine/oracle" if you want)
+  allSpells.forEach(sp=>{
+    // if you do want to filter for "divine/oracle," you can check here
+    const traditions = (sp.traditions||[]).map(t => t.toLowerCase());
+    const traits = (sp.traits||[]).map(t => t.toLowerCase());
+    const combined = [...traditions, ...traits];
+    if(!combined.includes('divine') && !combined.includes('oracle')) {
+      return; // skip
+    }
+
+    const d = document.createElement('div');
+    d.classList.add('choose-spell-item');
+    d.textContent = sp.name;
+    d.addEventListener('click',()=>{
+      // set chosen
+      chosenSpells[selectingSlotKey] = sp;
+      saveToLocalStorage();
+      closeChooseModal();
+      renderSlots();
+    });
+    chooseList.appendChild(d);
+  });
+
+  document.getElementById('chooseSpellModal').classList.add('active');
+}
+function closeChooseModal() {
+  document.getElementById('chooseSpellModal').classList.remove('active');
+  selectingSlotKey=null;
+}
+</script>
+</body>
+</html>
