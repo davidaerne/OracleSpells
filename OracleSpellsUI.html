@@ -2,23 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <!-- Prevent iOS auto-zoom on inputs by ensuring user-scalable=no and font-size >=16px. -->
+  <!-- Prevent iOS from zooming on inputs by ensuring user-scalable=no and
+       font-size >=16px on the filter controls. -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
-  <title>Spell DB (Modal Filter)</title>
+  <title>Spell DB (Bold on New Lines, Filter Modal)</title>
   <style>
     /* Body & Global */
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background-color: #f9f9f9; /* matches your existing pages */
+      background-color: #f9f9f9;
     }
 
-    /* Header with a filter button */
+    /* Header with a "Filter" button */
     header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background-color: #fff; /* white header */
+      background-color: #fff;
       padding: 1rem;
       border-bottom: 1px solid #ddd;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -38,7 +39,7 @@
       font-size: 1rem;
     }
 
-    /* Main content area for spells */
+    /* Main content for spells */
     .content {
       padding: 1rem;
     }
@@ -89,6 +90,7 @@
       font-size: 0.9rem;
       color: #444;
     }
+
     /* Action circle style */
     .action-circle {
       display: inline-block;
@@ -104,10 +106,13 @@
       margin: 0 4px;
     }
 
-    /* Modal Overlay for filter */
+    /* Filter Modal Overlay */
     .modal-overlay {
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
+      top: 0; 
+      left: 0; 
+      right: 0; 
+      bottom: 0;
       background-color: rgba(0,0,0,0.5);
       display: none; /* hidden by default */
       justify-content: center;
@@ -117,7 +122,7 @@
     .modal-overlay.active {
       display: flex;
     }
-    /* Modal Content */
+    /* Filter Modal content */
     .modal-content {
       background-color: #fff;
       width: 90%;
@@ -147,7 +152,7 @@
     }
     .modal-body {
       padding: 1rem;
-      font-size: 16px; /* keep at least 16px to avoid iOS zoom */
+      font-size: 16px; /* at least 16px to avoid iOS auto-zoom */
     }
     .filter-row {
       margin-bottom: 1rem;
@@ -163,7 +168,7 @@
       padding: 0.6rem;
       border: 1px solid #ccc;
       border-radius: 4px;
-      font-size: 16px; /* 16px to avoid iOS zoom */
+      font-size: 16px; /* 16px for iOS */
     }
     .modal-footer {
       display: flex;
@@ -189,7 +194,7 @@
       color: #333;
     }
 
-    /* Spell modal (details) overlay */
+    /* Spell details modal */
     .modal {
       display: none; 
       position: fixed; 
@@ -241,31 +246,29 @@
       line-height: 1.4;
     }
 
-    /* For smaller screens, the filter modal might still fill the screen in practice,
-       but you can tweak. There's no hamburger since we use the Filter button. */
+    /* Larger font on small screens if you prefer. */
     @media (max-width: 768px) {
       .modal-body {
-        font-size: 18px; /* extra large on small screens */
+        font-size: 18px;
       }
     }
   </style>
 </head>
 <body>
 
-<!-- Header with "Filter" button -->
+<!-- HEADER -->
 <header>
   <h1 class="header-title">Spell List</h1>
+  <!-- Button that opens the filter modal -->
   <button class="filter-btn" onclick="openFilterModal()">Filter</button>
 </header>
 
-<!-- Main content for spells -->
+<!-- MAIN CONTENT: Collapsibles for each level -->
 <div class="content">
-  <div id="spell-container">
-    <!-- Collapsibles will be injected here by JS -->
-  </div>
+  <div id="spell-container"></div>
 </div>
 
-<!-- FILTER MODAL (NEW) -->
+<!-- FILTER MODAL (Overlay) -->
 <div id="filterModal" class="modal-overlay">
   <div class="modal-content">
     <div class="modal-header">
@@ -273,12 +276,12 @@
       <button class="close-btn" onclick="closeFilterModal()">✕</button>
     </div>
     <div class="modal-body">
-      <!-- Search Row -->
+      <!-- Search Field -->
       <div class="filter-row">
         <label for="searchInput">Search</label>
-        <input id="searchInput" type="text" placeholder="Name or Trait"/>
+        <input id="searchInput" type="text" placeholder="Name or Trait" />
       </div>
-      <!-- Type Row -->
+      <!-- Type Field -->
       <div class="filter-row">
         <label for="typeSelect">Type</label>
         <select id="typeSelect">
@@ -287,7 +290,7 @@
           <option value="Cantrip">Cantrip</option>
         </select>
       </div>
-      <!-- Sort By Row -->
+      <!-- Sort Field -->
       <div class="filter-row">
         <label for="sortSelect">Sort By</label>
         <select id="sortSelect">
@@ -295,7 +298,7 @@
           <option value="Name">Name</option>
         </select>
       </div>
-      <!-- Action Count Row (1,2,3,1-3) -->
+      <!-- Action Count Field -->
       <div class="filter-row">
         <label for="actionSelect">Action Count</label>
         <select id="actionSelect">
@@ -340,21 +343,20 @@
 </div>
 
 <script>
-/* Global data */
 let allSpells = [];
 let filteredSpells = [];
-let currentlyOpen = null; // track which collapsible group is expanded
+let currentlyOpen = null; // track expanded collapsible
 
-/* ----------- FETCH SPELLS FROM GITHUB ----------- */
+/* FETCH FROM GITHUB */
 fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/refs/heads/main/spells.json')
   .then(res => res.json())
   .then(data => {
     allSpells = data;
     applyFiltersAndRender();
   })
-  .catch(err => console.error('Fetch error:', err));
+  .catch(err => console.error("Fetch error:", err));
 
-/* ============ MODAL CONTROL (FILTER) ============ */
+/* OPEN/CLOSE FILTER MODAL */
 function openFilterModal() {
   document.getElementById('filterModal').classList.add('active');
 }
@@ -362,7 +364,7 @@ function closeFilterModal() {
   document.getElementById('filterModal').classList.remove('active');
 }
 
-/* ============ APPLY & RESET ============ */
+/* APPLY & RESET FILTERS */
 function applyFilters() {
   applyFiltersAndRender();
   closeFilterModal();
@@ -376,88 +378,82 @@ function resetFilters() {
   closeFilterModal();
 }
 
-/* ============ FILTER & RENDER ============ */
+/* MAIN FILTER & RENDER */
 function applyFiltersAndRender() {
-  const searchValue = document.getElementById('searchInput').value.toLowerCase();
-  const typeValue = document.getElementById('typeSelect').value;
-  const sortValue = document.getElementById('sortSelect').value;
-  const actionValue = document.getElementById('actionSelect').value;
+  const searchVal = document.getElementById('searchInput').value.toLowerCase();
+  const typeVal = document.getElementById('typeSelect').value;
+  const sortVal = document.getElementById('sortSelect').value;
+  const actionVal = document.getElementById('actionSelect').value;
 
-  // 1) Filter for 'divine' or 'oracle' spells
-  filteredSpells = allSpells.filter(spell => {
-    const traditions = (spell.traditions || []).map(t => t.toLowerCase());
-    const traits = (spell.traits || []).map(t => t.toLowerCase());
+  // 1) Filter for 'divine' or 'oracle'
+  filteredSpells = allSpells.filter(sp => {
+    const traditions = (sp.traditions || []).map(t => t.toLowerCase());
+    const traits = (sp.traits || []).map(t => t.toLowerCase());
     const combined = [...traditions, ...traits];
     if (!combined.includes('divine') && !combined.includes('oracle')) {
       return false;
     }
 
-    // 2) Type filter: Spell vs. Cantrip
-    if (typeValue === 'Cantrip' && !isCantrip(spell)) return false;
-    if (typeValue === 'Spell' && isCantrip(spell)) return false;
+    // 2) Type filter
+    if (typeVal === 'Cantrip' && !isCantrip(sp)) return false;
+    if (typeVal === 'Spell' && isCantrip(sp)) return false;
 
     // 3) Search in name or trait
-    const inName = spell.name.toLowerCase().includes(searchValue);
-    const inTrait = (spell.traits || []).some(t => t.toLowerCase().includes(searchValue));
-    if (searchValue && !inName && !inTrait) return false;
+    const inName = sp.name.toLowerCase().includes(searchVal);
+    const inTrait = traits.some(t => t.includes(searchVal));
+    if (searchVal && !inName && !inTrait) return false;
 
-    // 4) Action Count filter
-    if (!actionMatches(spell, actionValue)) return false;
+    // 4) Action count filter
+    if (!actionMatches(sp, actionVal)) return false;
 
     return true;
   });
 
   // 5) Sort
-  if (sortValue === 'Level') {
+  if (sortVal === 'Level') {
     filteredSpells.sort((a,b) => getSpellLevel(a) - getSpellLevel(b));
-  } else if (sortValue === 'Name') {
+  } else if (sortVal === 'Name') {
     filteredSpells.sort((a,b) => a.name.localeCompare(b.name));
   }
 
-  // 6) Render collapsibles
+  // 6) Render
   renderCollapsibles(filteredSpells);
 }
 
-/* ============ ACTION FILTER LOGIC ============ */
+/* DETECT CANTRIP */
+function isCantrip(spell) {
+  const traitsLower = (spell.traits || []).map(x => x.toLowerCase());
+  const typeLower = (spell.type || '').toLowerCase();
+  return traitsLower.includes('cantrip') || typeLower === 'cantrip';
+}
+
+/* DETECT ACTION COUNT */
 function actionMatches(spell, actionVal) {
   if (actionVal === 'Any') return true;
   const act = (spell.action || '').trim();
   const actMax = (spell.actionMax || '').trim();
 
   switch (actionVal) {
-    case '1': // spells with action=1 or actionMax=1
-      return (act === '1' || actMax === '1');
-    case '2':
-      return (act === '2' || actMax === '2');
-    case '3':
-      return (act === '3' || actMax === '3');
-    case '1-3':
-      return (actMax === '3'); // e.g., Heal has 1 to 3
-    default:
-      return true;
+    case '1': return (act === '1' || actMax === '1');
+    case '2': return (act === '2' || actMax === '2');
+    case '3': return (act === '3' || actMax === '3');
+    case '1-3': return (actMax === '3'); // e.g. Heal has 1-3
+    default: return true;
   }
 }
 
-/* ============ IS CANTRIP HELPER ============ */
-function isCantrip(spell) {
-  const traitsLower = (spell.traits || []).map(t => t.toLowerCase());
-  const typeLower = (spell.type || '').toLowerCase();
-  return traitsLower.includes('cantrip') || typeLower === 'cantrip';
-}
-
-/* ============ SPELL LEVEL HELPER ============ */
+/* GET SPELL LEVEL (0 for cantrips, -1 if invalid) */
 function getSpellLevel(spell) {
   if (isCantrip(spell)) return 0;
   const parsed = parseInt(spell.level, 10);
   return isNaN(parsed) ? -1 : parsed;
 }
 
-/* ============ RENDER COLLAPSIBLES ============ */
+/* RENDER COLLAPSIBLES, SINGLE EXPAND */
 function renderCollapsibles(spells) {
   const container = document.getElementById('spell-container');
   container.innerHTML = '';
 
-  // Group by level
   const levelMap = {};
   spells.forEach(sp => {
     const lvl = getSpellLevel(sp);
@@ -465,8 +461,9 @@ function renderCollapsibles(spells) {
     levelMap[lvl].push(sp);
   });
 
-  // Sort levels
-  const sortedLevels = Object.keys(levelMap).map(Number).sort((a,b) => a - b);
+  const sortedLevels = Object.keys(levelMap)
+    .map(Number)
+    .sort((a,b) => a - b);
 
   sortedLevels.forEach(lvl => {
     const btn = document.createElement('button');
@@ -476,43 +473,42 @@ function renderCollapsibles(spells) {
     const contentDiv = document.createElement('div');
     contentDiv.classList.add('collapsible-content');
 
-    // Sort spells by name within level
+    // sort spells by name within level
     levelMap[lvl].sort((a,b) => a.name.localeCompare(b.name));
 
-    levelMap[lvl].forEach(spell => {
+    levelMap[lvl].forEach(sp => {
       const itemDiv = document.createElement('div');
       itemDiv.classList.add('spell-item');
 
       const nameEl = document.createElement('div');
       nameEl.classList.add('spell-name');
-      nameEl.textContent = spell.name;
+      nameEl.textContent = sp.name;
 
       const traitsEl = document.createElement('div');
       traitsEl.classList.add('spell-traits');
-      traitsEl.textContent = `Traits: ${(spell.traits || []).join(', ')}`;
+      traitsEl.textContent = `Traits: ${(sp.traits || []).join(', ')}`;
 
-      // Show actions & range
       const extraRow = document.createElement('div');
       extraRow.classList.add('spell-extra-row');
       extraRow.innerHTML = `
         <div>${
-          spell.actionMax
-            ? `Actions: ${buildActionIcons(spell.actionMax)}`
-            : (spell.action ? `Actions: ${buildActionIcons(spell.action)}` : '')
+          sp.actionMax
+            ? `Actions: ${buildActionIcons(sp.actionMax)}`
+            : (sp.action ? `Actions: ${buildActionIcons(sp.action)}` : '')
         }</div>
-        <div>${spell.range ? `Range: ${spell.range}` : ''}</div>
+        <div>${sp.range ? `Range: ${sp.range}` : ''}</div>
       `;
 
       itemDiv.appendChild(nameEl);
       itemDiv.appendChild(traitsEl);
       itemDiv.appendChild(extraRow);
 
-      // Clicking -> open details modal
-      itemDiv.addEventListener('click', () => openSpellModal(spell));
+      // open details modal on click
+      itemDiv.addEventListener('click', () => openSpellModal(sp));
       contentDiv.appendChild(itemDiv);
     });
 
-    // Single expand logic
+    // single expand
     btn.addEventListener('click', () => {
       if (currentlyOpen && currentlyOpen !== contentDiv) {
         currentlyOpen.style.display = 'none';
@@ -531,16 +527,15 @@ function renderCollapsibles(spells) {
   });
 }
 
-/* ============ ACTION ICONS ============ */
+/* ACTION ICONS */
 function buildActionIcons(str) {
   return str.replace(/\d+/g, m => `<span class="action-circle">${m}</span>`);
 }
 
-/* ============ OPEN/CLOSE SPELL DETAILS MODAL ============ */
+/* OPEN SPELL MODAL */
 function openSpellModal(spell) {
   document.getElementById('modal-title').textContent = spell.name || '(No Name)';
 
-  // no "Spell Level 0" for cantrips
   const lvl = getSpellLevel(spell);
   if (lvl > 0) {
     document.getElementById('modal-level').textContent = `Spell Level ${lvl}`;
@@ -566,21 +561,22 @@ function openSpellModal(spell) {
   document.getElementById('modal-cast').innerHTML = castString || '(No action info)';
 
   // Range
-  document.getElementById('modal-range').textContent = spell.range || '(No range specified)';
+  document.getElementById('modal-range').textContent =
+    spell.range || '(No range specified)';
 
-  // Targets (hide if none)
-  const tLabel = document.getElementById('targets-label');
-  const tContent = document.getElementById('modal-targets');
+  // Targets
+  const targetsLabel = document.getElementById('targets-label');
+  const targetsContent = document.getElementById('modal-targets');
   if (spell.targets) {
-    tLabel.style.display = 'block';
-    tContent.style.display = 'block';
-    tContent.textContent = spell.targets;
+    targetsLabel.style.display = 'block';
+    targetsContent.style.display = 'block';
+    targetsContent.textContent = spell.targets;
   } else {
-    tLabel.style.display = 'none';
-    tContent.style.display = 'none';
+    targetsLabel.style.display = 'none';
+    targetsContent.style.display = 'none';
   }
 
-  // Saving throw
+  // Saving Throw
   const stLabel = document.getElementById('savingthrow-label');
   const stContent = document.getElementById('modal-savingthrow');
   if (spell['saving throw']) {
@@ -592,17 +588,22 @@ function openSpellModal(spell) {
     stContent.style.display = 'none';
   }
 
-  // description
+  // Description: new line for bold and "Heightened," plus action circles
   let desc = spell.description || '(No description)';
-  desc = desc.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  // Insert <br> before bold
+  desc = desc.replace(/\*\*(.*?)\*\*/g, '<br><strong>$1</strong>');
+  // New line before "Heightened"
   desc = desc.replace(/(Heightened\s*\(\+?\d+\)|Heightened\s*\(\d+(?:st|nd|rd|th)\))/gi, '<br>$1');
+  // Convert |X| → new line + action circle
   desc = desc.replace(/\|(\d+)\|\s*/g, '<br><span class="action-circle">$1</span> ');
+
   document.getElementById('modal-description').innerHTML = desc;
 
-  // show
+  // show details modal
   document.getElementById('spell-modal').style.display = 'block';
 }
 
+/* CLOSE SPELL MODAL */
 document.getElementById('close-modal').addEventListener('click', () => {
   document.getElementById('spell-modal').style.display = 'none';
 });
@@ -612,6 +613,5 @@ window.addEventListener('click', e => {
   }
 });
 </script>
-
 </body>
 </html>
