@@ -1,552 +1,534 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no"/>
-  <title>Spell DB (Clear Filter Button)</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #f9f9f9;
-    }
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background-color: #fff;
-      padding: 1rem;
-      border-bottom: 1px solid #ddd;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      gap: 0.5rem;
-    }
-    .header-title {
-      font-size: 1.25rem;
-      font-weight: bold;
-      margin: 0;
-    }
-    .btn-group {
-      display: flex;
-      gap: 0.5rem;
-    }
-    .filter-btn, .clear-filter-btn {
-      background-color: #007aff;
-      color: #fff;
-      border: none;
-      padding: 0.6rem 0.9rem;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 1rem;
-    }
-    .clear-filter-btn {
-      background-color: #666; /* a slightly darker gray or color if you prefer */
-    }
+import React, { useState, useEffect } from 'react';
+import { Search, Filter, X } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-    .content {
-      padding: 1rem;
-    }
+const SpellDatabase = () => {
+  const [spells, setSpells] = useState([]);
+  const [filteredSpells, setFilteredSpells] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  // State for saved preferences and favorites
+  const [favoriteSpells, setFavoriteSpells] = useState([]);
+  const [lastUpdate, setLastUpdate] = useState(null);
+  
+  // Initialize IndexedDB
+  useEffect(() => {
+    const initDB = async () => {
+      const request = indexedDB.open('SpellsDatabase', 1);
+      
+      request.onerror = (event) => {
+        console.error('IndexedDB error:', event.target.error);
+        setError('Failed to initialize local database');
+      };
 
-    /* Collapsible spells etc. from previous code */
-    .collapsible {
-      background-color: #eee;
-      color: #444;
-      cursor: pointer;
-      padding: 14px;
-      width: 100%;
-      border: none;
-      outline: none;
-      text-align: left;
-      font-size: 18px;
-      margin-bottom: 5px;
-      transition: background-color 0.2s;
-    }
-    .collapsible:hover {
-      background-color: #ddd;
-    }
-    .collapsible-content {
-      display: none;
-      overflow: hidden;
-      background-color: #f1f1f1;
-      margin-bottom: 10px;
-      padding: 0 18px;
-    }
-    .spell-item {
-      border-bottom: 1px solid #ddd;
-      padding: 10px 0;
-      cursor: pointer;
-    }
-    .spell-name { font-weight: bold; }
-    .spell-traits {
-      font-style: italic;
-      color: #888;
-    }
-    .spell-extra-row {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 4px;
-      font-size: 0.9rem;
-      color: #444;
-    }
-    .action-circle {
-      display: inline-block;
-      width: 1.3em;
-      height: 1.3em;
-      line-height: 1.3em;
-      text-align: center;
-      vertical-align: middle;
-      border-radius: 50%;
-      background-color: #333;
-      color: #fff;
-      font-weight: bold;
-      margin: 0 4px;
-    }
-    /* Filter Modal Overlay */
-    .modal-overlay {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background-color: rgba(0,0,0,0.5);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 999;
-    }
-    .modal-overlay.active { display: flex; }
-    .modal-content {
-      background-color: #fff;
-      width: 90%; max-width: 500px;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .modal-header {
-      padding: 1rem;
-      border-bottom: 1px solid #ddd;
-      display: flex; justify-content: space-between; align-items: center;
-      background-color: #f9f9f9;
-    }
-    .modal-title { font-size: 1.2rem; font-weight: 600; margin: 0; }
-    .close-btn {
-      background: none; border: none;
-      font-size: 1.2rem;
-      cursor: pointer; color: #999;
-    }
-    .modal-body {
-      padding: 1rem; font-size: 16px;
-    }
-    .filter-row { margin-bottom: 1rem; }
-    .filter-row label {
-      display: block; margin-bottom: 0.5rem; font-weight: 500;
-    }
-    .filter-row select, .filter-row input {
-      width: 100%; padding: 0.6rem;
-      border: 1px solid #ccc; border-radius: 4px;
-      font-size: 16px;
-    }
-    .modal-footer {
-      display: flex; justify-content: flex-end; gap: 0.5rem;
-      padding: 1rem; border-top: 1px solid #ddd; background-color: #f9f9f9;
-    }
-    .action-btn {
-      padding: 0.6rem 1rem; border: none; cursor: pointer;
-      border-radius: 4px; font-size: 1rem;
-    }
-    .apply { background-color: #007aff; color: #fff; }
-    .reset { background-color: #eee; color: #333; }
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains('spells')) {
+          db.createObjectStore('spells', { keyPath: 'name' });
+        }
+        if (!db.objectStoreNames.contains('favorites')) {
+          db.createObjectStore('favorites', { keyPath: 'name' });
+        }
+      };
+    };
 
-    /* Spell details modal */
-    .modal {
-      display: none; 
-      position: fixed; 
-      z-index: 9999; 
-      left: 0; top: 0; width: 100%; height: 100%;
-      overflow: auto;
-      background-color: rgba(0,0,0,0.4);
+    initDB();
+  }, []);
+
+  // Load saved preferences from localStorage
+  useEffect(() => {
+    const savedFilters = localStorage.getItem('spellFilters');
+    if (savedFilters) {
+      setFilters(JSON.parse(savedFilters));
     }
-    .modal-details-content {
-      background-color: #fff;
-      margin: 5% auto;
-      padding: 20px;
-      border-radius: 6px;
-      width: 90%; max-width: 600px;
-      position: relative;
+    
+    const savedFavorites = localStorage.getItem('favoriteSpells');
+    if (savedFavorites) {
+      setFavoriteSpells(JSON.parse(savedFavorites));
     }
-    .close-modal {
-      position: absolute; right: 16px; top: 16px;
-      font-size: 28px; font-weight: bold; cursor: pointer;
+    
+    const savedUpdate = localStorage.getItem('lastSpellUpdate');
+    if (savedUpdate) {
+      setLastUpdate(new Date(savedUpdate));
     }
-    .close-modal:hover { color: #999; }
-    .modal-details-content h2 {
-      margin-top: 0; margin-bottom: 0.5rem; font-size: 1.25rem;
-    }
-    #modal-level, #modal-traits {
-      margin-bottom: 0.5rem; color: #555; font-size: 0.95rem;
-    }
-    .modal-field-label {
-      font-weight: bold; margin-top: 1rem; margin-bottom: 0.25rem;
-    }
-    .modal-field-content {
-      margin-bottom: 0.5rem; line-height: 1.4;
-    }
-  </style>
-</head>
-<body>
+  }, []);
 
-<!-- HEADER -->
-<header>
-  <h1 class="header-title">Spell List</h1>
-  <div class="btn-group">
-    <!-- Filter opens the modal -->
-    <button class="filter-btn" onclick="openFilterModal()">Filter</button>
-    <!-- Clear Filter resets from main screen -->
-    <button class="clear-filter-btn" onclick="clearFiltersFromMain()">Clear Filter</button>
-  </div>
-</header>
+  // Save preferences to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('spellFilters', JSON.stringify(filters));
+  }, [filters]);
 
-<!-- CONTENT: Collapsibles -->
-<div class="content">
-  <div id="spell-container"></div>
-</div>
+  useEffect(() => {
+    localStorage.setItem('favoriteSpells', JSON.stringify(favoriteSpells));
+  }, [favoriteSpells]);
 
-<!-- FILTER MODAL -->
-<div id="filterModal" class="modal-overlay">
-  <div class="modal-content">
-    <div class="modal-header">
-      <div class="modal-title">Filter Options</div>
-      <button class="close-btn" onclick="closeFilterModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <!-- Search -->
-      <div class="filter-row">
-        <label for="searchInput">Search</label>
-        <input id="searchInput" type="text" placeholder="Name or Trait"/>
-      </div>
-      <!-- Type -->
-      <div class="filter-row">
-        <label for="typeSelect">Type</label>
-        <select id="typeSelect">
-          <option value="All">All</option>
-          <option value="Spell">Spell</option>
-          <option value="Cantrip">Cantrip</option>
-        </select>
-      </div>
-      <!-- Sort -->
-      <div class="filter-row">
-        <label for="sortSelect">Sort By</label>
-        <select id="sortSelect">
-          <option value="Level">Level</option>
-          <option value="Name">Name</option>
-        </select>
-      </div>
-      <!-- Actions -->
-      <div class="filter-row">
-        <label for="actionSelect">Action Count</label>
-        <select id="actionSelect">
-          <option value="Any">Any</option>
-          <option value="1">1 action</option>
-          <option value="2">2 actions</option>
-          <option value="3">3 actions</option>
-          <option value="1-3">1-3 actions</option>
-        </select>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="action-btn reset" onclick="resetFilters()">Reset</button>
-      <button class="action-btn apply" onclick="applyFilters()">Apply</button>
-    </div>
-  </div>
-</div>
+  // Function to save spells to IndexedDB
+  const saveSpellsLocally = async (spellData) => {
+    const request = indexedDB.open('SpellsDatabase', 1);
+    
+    request.onsuccess = (event) => {
+      const db = event.target.result;
+      const transaction = db.transaction(['spells'], 'readwrite');
+      const store = transaction.objectStore('spells');
+      
+      // Clear existing data
+      store.clear();
+      
+      // Add new data
+      spellData.forEach(spell => {
+        store.add(spell);
+      });
+      
+      // Update last update timestamp
+      const now = new Date();
+      setLastUpdate(now);
+      localStorage.setItem('lastSpellUpdate', now.toISOString());
+    };
+  };
 
-<!-- SPELL DETAILS MODAL -->
-<div id="spell-modal" class="modal">
-  <div class="modal-details-content">
-    <span id="close-modal" class="close-modal">&times;</span>
-    <h2 id="modal-title"></h2>
-    <div id="modal-level"></div>
-    <div id="modal-traits"></div>
-
-    <div class="modal-field-label">Cast</div>
-    <div id="modal-cast" class="modal-field-content"></div>
-
-    <div class="modal-field-label">Range</div>
-    <div id="modal-range" class="modal-field-content"></div>
-
-    <div class="modal-field-label" id="targets-label">Targets</div>
-    <div id="modal-targets" class="modal-field-content"></div>
-
-    <div class="modal-field-label" id="savingthrow-label">Saving Throw</div>
-    <div id="modal-savingthrow" class="modal-field-content"></div>
-
-    <div class="modal-field-label">Description</div>
-    <div id="modal-description" class="modal-field-content"></div>
-  </div>
-</div>
-
-<script>
-let allSpells = [];
-let filteredSpells = [];
-let currentlyOpen = null; // single expand reference
-
-/* FETCH from GitHub */
-fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/refs/heads/main/spells.json')
-  .then(res => res.json())
-  .then(data => {
-    allSpells = data;
-    applyFiltersAndRender();
-  })
-  .catch(err => console.error("Fetch error:", err));
-
-/* FILTER MODAL CONTROL */
-function openFilterModal() {
-  document.getElementById('filterModal').classList.add('active');
-}
-function closeFilterModal() {
-  document.getElementById('filterModal').classList.remove('active');
-}
-
-/* APPLY & RESET from the modal */
-function applyFilters() {
-  applyFiltersAndRender();
-  closeFilterModal();
-}
-function resetFilters() {
-  document.getElementById('searchInput').value = '';
-  document.getElementById('typeSelect').value = 'All';
-  document.getElementById('sortSelect').value = 'Level';
-  document.getElementById('actionSelect').value = 'Any';
-  applyFiltersAndRender();
-  closeFilterModal();
-}
-
-/* CLEAR FILTER from main screen (the new button) */
-function clearFiltersFromMain() {
-  document.getElementById('searchInput').value = '';
-  document.getElementById('typeSelect').value = 'All';
-  document.getElementById('sortSelect').value = 'Level';
-  document.getElementById('actionSelect').value = 'Any';
-  // Re-render
-  applyFiltersAndRender();
-}
-
-/* MAIN FILTER LOGIC */
-function applyFiltersAndRender() {
-  const searchVal = document.getElementById('searchInput').value.toLowerCase();
-  const typeVal = document.getElementById('typeSelect').value;
-  const sortVal = document.getElementById('sortSelect').value;
-  const actionVal = document.getElementById('actionSelect').value;
-
-  filteredSpells = allSpells.filter(sp => {
-    const traditions = (sp.traditions||[]).map(t => t.toLowerCase());
-    const traits = (sp.traits||[]).map(t => t.toLowerCase());
-    const combined = [...traditions, ...traits];
-    // Filter for "divine" or "oracle"
-    if(!combined.includes('divine') && !combined.includes('oracle')) return false;
-    // Type filter
-    if(typeVal === 'Cantrip' && !isCantrip(sp)) return false;
-    if(typeVal === 'Spell' && isCantrip(sp)) return false;
-    // Search in name or trait
-    if(searchVal) {
-      const inName = sp.name.toLowerCase().includes(searchVal);
-      const inTrait = traits.some(t => t.includes(searchVal));
-      if(!inName && !inTrait) return false;
-    }
-    // Action count
-    if(!actionMatches(sp, actionVal)) return false;
-
-    return true;
+  // Function to load spells from IndexedDB
+  const loadLocalSpells = async () => {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open('SpellsDatabase', 1);
+      
+      request.onsuccess = (event) => {
+        const db = event.target.result;
+        const transaction = db.transaction(['spells'], 'readonly');
+        const store = transaction.objectStore('spells');
+        const getAllRequest = store.getAll();
+        
+        getAllRequest.onsuccess = () => {
+          resolve(getAllRequest.result);
+        };
+        
+        getAllRequest.onerror = () => {
+          reject(getAllRequest.error);
+        };
+      };
+      
+      request.onerror = () => {
+        reject(request.error);
+      };
+    });
+  };
+    search: '',
+    type: 'All',
+    sort: 'Level',
+    actions: 'Any',
+    traditions: ['Divine', 'Oracle']
   });
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [selectedSpell, setSelectedSpell] = useState(null);
+  const [expandedLevel, setExpandedLevel] = useState(null);
 
-  // sort
-  if(sortVal === 'Level') {
-    filteredSpells.sort((a,b) => getSpellLevel(a)-getSpellLevel(b));
-  } else {
-    filteredSpells.sort((a,b) => a.name.localeCompare(b.name));
-  }
+  useEffect(() => {
+    const loadSpells = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('https://raw.githubusercontent.com/davidaerne/OracleSpells/76953dbcbc7738dbfc8352de3165b315a63312ea/spells.json');
+        if (!response.ok) {
+          throw new Error('Failed to fetch spells data');
+        }
+        const data = await response.json();
+        
+        // Process and validate the data
+        const processedSpells = data.map(spell => ({
+          ...spell,
+          traditions: spell.traditions || [],
+          traits: spell.traits || [],
+          level: spell.level || (spell.traits?.includes('Cantrip') ? '0' : '1')
+        }));
+        
+        setSpells(processedSpells);
+        setFilteredSpells(processedSpells);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error loading spells:', err);
+        setError(err.message);
+        setLoading(false);
+      }
+    };
 
-  renderCollapsibles(filteredSpells);
-}
+    loadSpells();
+  }, []);
 
-function isCantrip(spell) {
-  const traitsLower = (spell.traits||[]).map(t=>t.toLowerCase());
-  const typeLower = (spell.type||'').toLowerCase();
-  return (traitsLower.includes('cantrip') || typeLower==='cantrip');
-}
+  useEffect(() => {
+    if (spells.length > 0) {
+      applyFilters();
+    }
+  }, [filters, spells]);
 
-function actionMatches(spell, actionVal) {
-  if(actionVal==='Any') return true;
-  const act = (spell.action||'').trim();
-  const actMax = (spell.actionMax||'').trim();
-  switch(actionVal) {
-    case '1': return(act==='1'||actMax==='1');
-    case '2': return(act==='2'||actMax==='2');
-    case '3': return(act==='3'||actMax==='3');
-    case '1-3': return(actMax==='3');
-    default: return true;
-  }
-}
+  const isCantrip = (spell) => {
+    const traitsLower = (spell.traits || []).map(t => t.toLowerCase());
+    const typeLower = (spell.type || '').toLowerCase();
+    return traitsLower.includes('cantrip') || typeLower === 'cantrip';
+  };
 
-function getSpellLevel(spell) {
-  if(isCantrip(spell)) return 0;
-  const num = parseInt(spell.level,10);
-  return isNaN(num)?-1:num;
-}
+  const getSpellLevel = (spell) => {
+    if (isCantrip(spell)) return 0;
+    const num = parseInt(spell.level, 10);
+    return isNaN(num) ? -1 : num;
+  };
 
-/* RENDER collapsibles with single expand */
-function renderCollapsibles(spells) {
-  const container = document.getElementById('spell-container');
-  container.innerHTML = '';
+  const actionMatches = (spell, actionVal) => {
+    if (actionVal === 'Any') return true;
+    const act = (spell.action || '').trim();
+    const actMax = (spell.actionMax || '').trim();
+    switch (actionVal) {
+      case '1': return (act === '1' || actMax === '1');
+      case '2': return (act === '2' || actMax === '2');
+      case '3': return (act === '3' || actMax === '3');
+      case '1-3': return (actMax === '3');
+      default: return true;
+    }
+  };
 
-  // group by level
-  const levelMap={};
-  spells.forEach(sp=>{
-    const lvl=getSpellLevel(sp);
-    if(!levelMap[lvl]) levelMap[lvl]=[];
-    levelMap[lvl].push(sp);
-  });
-
-  const sortedLevels=Object.keys(levelMap).map(Number).sort((a,b)=>a-b);
-
-  sortedLevels.forEach(lvl=>{
-    const btn=document.createElement('button');
-    btn.classList.add('collapsible');
-    btn.textContent=(lvl===0?'Cantrips':`Level ${lvl}`);
-
-    const contentDiv=document.createElement('div');
-    contentDiv.classList.add('collapsible-content');
-
-    levelMap[lvl].sort((a,b)=>a.name.localeCompare(b.name));
-    levelMap[lvl].forEach(sp=>{
-      const itemDiv=document.createElement('div');
-      itemDiv.classList.add('spell-item');
-
-      const nameEl=document.createElement('div');
-      nameEl.classList.add('spell-name');
-      nameEl.textContent=sp.name;
-
-      const traitsEl=document.createElement('div');
-      traitsEl.classList.add('spell-traits');
-      traitsEl.textContent=`Traits: ${(sp.traits||[]).join(', ')}`;
-
-      const extraRow=document.createElement('div');
-      extraRow.classList.add('spell-extra-row');
-      extraRow.innerHTML=`
-        <div>${
-          sp.actionMax
-            ? 'Actions: '+buildActionIcons(sp.actionMax)
-            : (sp.action?'Actions: '+buildActionIcons(sp.action):'')
-        }</div>
-        <div>${sp.range?'Range: '+sp.range:''}</div>
-      `;
-
-      itemDiv.appendChild(nameEl);
-      itemDiv.appendChild(traitsEl);
-      itemDiv.appendChild(extraRow);
-
-      // open details
-      itemDiv.addEventListener('click',()=>openSpellModal(sp));
-      contentDiv.appendChild(itemDiv);
+  const applyFilters = () => {
+    let filtered = spells.filter(spell => {
+      const traditions = (spell.traditions || []).map(t => t.toLowerCase());
+      const traits = (spell.traits || []).map(t => t.toLowerCase());
+      const combined = [...traditions, ...traits];
+      
+      // Filter by selected traditions
+      if (filters.traditions.length > 0) {
+        const hasSelectedTradition = filters.traditions.some(tradition => 
+          combined.includes(tradition.toLowerCase())
+        );
+        if (!hasSelectedTradition) return false;
+      }
+      
+      if (filters.type === 'Cantrip' && !isCantrip(spell)) return false;
+      if (filters.type === 'Spell' && isCantrip(spell)) return false;
+      
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        const inName = spell.name.toLowerCase().includes(searchLower);
+        const inTrait = traits.some(t => t.includes(searchLower));
+        if (!inName && !inTrait) return false;
+      }
+      
+      if (!actionMatches(spell, filters.actions)) return false;
+      
+      return true;
     });
 
-    // single expand
-    btn.addEventListener('click',()=>{
-      if(currentlyOpen && currentlyOpen!==contentDiv) {
-        currentlyOpen.style.display='none';
-      }
-      if(contentDiv.style.display==='block') {
-        contentDiv.style.display='none';
-        currentlyOpen=null;
-      } else {
-        contentDiv.style.display='block';
-        currentlyOpen=contentDiv;
-      }
-    });
-
-    container.appendChild(btn);
-    container.appendChild(contentDiv);
-  });
-}
-
-function buildActionIcons(str) {
-  return str.replace(/\d+/g, m=>`<span class="action-circle">${m}</span>`);
-}
-
-/* SPELL DETAILS MODAL */
-function openSpellModal(spell) {
-  document.getElementById('modal-title').textContent=spell.name||'(No Name)';
-
-  const lvl=getSpellLevel(spell);
-  if(lvl>0) {
-    document.getElementById('modal-level').textContent=`Spell Level ${lvl}`;
-  } else {
-    document.getElementById('modal-level').textContent='';
-  }
-
-  document.getElementById('modal-traits').textContent=
-    `Traits: ${(spell.traits||[]).join(', ')}`;
-
-  // build cast line
-  let castString='';
-  if(spell.action) {
-    if(spell.actionMax) {
-      castString+=`Actions: ${buildActionIcons(spell.action)} to ${buildActionIcons(spell.actionMax)}`;
+    if (filters.sort === 'Level') {
+      filtered.sort((a, b) => getSpellLevel(a) - getSpellLevel(b));
     } else {
-      castString+=`Actions: ${buildActionIcons(spell.action)}`;
+      filtered.sort((a, b) => a.name.localeCompare(b.name));
     }
-  }
-  if(spell.cast && spell.cast.toLowerCase()!=='to') {
-    castString+=(castString?' ':'')+spell.cast;
-  }
-  document.getElementById('modal-cast').innerHTML=castString||'(No action info)';
 
-  // range
-  document.getElementById('modal-range').textContent=
-    spell.range||'(No range specified)';
+    setFilteredSpells(filtered);
+  };
 
-  // targets
-  const tLabel=document.getElementById('targets-label');
-  const tContent=document.getElementById('modal-targets');
-  if(spell.targets) {
-    tLabel.style.display='block';
-    tContent.style.display='block';
-    tContent.textContent=spell.targets;
-  } else {
-    tLabel.style.display='none';
-    tContent.style.display='none';
-  }
+  const ActionCircle = ({ count }) => (
+    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-800 text-white font-bold mx-1">
+      {count}
+    </span>
+  );
 
-  // saving throw
-  const stLabel=document.getElementById('savingthrow-label');
-  const stContent=document.getElementById('modal-savingthrow');
-  if(spell['saving throw']) {
-    stLabel.style.display='block';
-    stContent.style.display='block';
-    stContent.textContent=spell['saving throw'];
-  } else {
-    stLabel.style.display='none';
-    stContent.style.display='none';
-  }
+  const SpellLevelGroup = ({ level, spells }) => {
+    const isExpanded = expandedLevel === level;
+    const levelText = level === 0 ? 'Cantrips' : `Level ${level}`;
 
-  // description with new lines for bold and heightened
-  let desc=spell.description||'(No description)';
-  // <br> before bold
-  desc=desc.replace(/\*\*(.*?)\*\*/g,'<br><strong>$1</strong>');
-  // <br> before Heightened
-  desc=desc.replace(/(Heightened\s*\(\+?\d+\)|Heightened\s*\(\d+(?:st|nd|rd|th)\))/gi,'<br>$1');
-  // <br> before |X|
-  desc=desc.replace(/\|(\d+)\|\s*/g,'<br><span class="action-circle">$1</span> ');
+    return (
+      <div className="mb-4">
+        <button
+          onClick={() => setExpandedLevel(isExpanded ? null : level)}
+          className="w-full p-4 text-left bg-gray-100 hover:bg-gray-200 rounded-lg mb-2 font-semibold"
+        >
+          {levelText}
+        </button>
+        {isExpanded && (
+          <div className="space-y-2">
+            {spells.map((spell, idx) => (
+              <div
+                key={idx}
+                onClick={() => setSelectedSpell(spell)}
+                className="p-4 bg-white rounded-lg shadow hover:shadow-md cursor-pointer"
+              >
+                <div className="font-semibold">{spell.name}</div>
+                <div className="text-sm text-gray-600">
+                  Traits: {(spell.traits || []).join(', ')}
+                </div>
+                <div className="flex justify-between text-sm text-gray-600 mt-2">
+                  <div>
+                    Actions: {spell.actionMax ? (
+                      <>
+                        <ActionCircle count={spell.action} /> to <ActionCircle count={spell.actionMax} />
+                      </>
+                    ) : (
+                      <ActionCircle count={spell.action} />
+                    )}
+                  </div>
+                  <div>{spell.range ? `Range: ${spell.range}` : ''}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
-  document.getElementById('modal-description').innerHTML=desc;
+  const FilterModal = () => (
+    <div className={`fixed inset-0 bg-black bg-opacity-50 z-50 ${showFilterModal ? 'flex' : 'hidden'} items-center justify-center`}>
+      <Card className="w-full max-w-md mx-4">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>Filter Options</CardTitle>
+            <button onClick={() => setShowFilterModal(false)} className="text-gray-500 hover:text-gray-700">
+              <X size={24} />
+            </button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="block mb-2 font-medium">Search</label>
+            <input
+              type="text"
+              value={filters.search}
+              onChange={e => setFilters({ ...filters, search: e.target.value })}
+              className="w-full p-2 border rounded"
+              placeholder="Name or Trait"
+            />
+          </div>
+          <div>
+            <label className="block mb-2 font-medium">Traditions</label>
+            <select
+              multiple
+              value={filters.traditions}
+              onChange={(e) => {
+                const selected = Array.from(e.target.selectedOptions, option => option.value);
+                setFilters({ ...filters, traditions: selected });
+              }}
+              className="w-full p-2 border rounded"
+              size="4"
+            >
+              <option value="Arcane">Arcane</option>
+              <option value="Divine">Divine</option>
+              <option value="Occult">Occult</option>
+              <option value="Primal">Primal</option>
+              <option value="Oracle">Oracle</option>
+            </select>
+          </div>
+          <div>
+            <label className="block mb-2 font-medium">Type</label>
+            <select
+              value={filters.type}
+              onChange={e => setFilters({ ...filters, type: e.target.value })}
+              className="w-full p-2 border rounded"
+            >
+              <option value="All">All</option>
+              <option value="Spell">Spell</option>
+              <option value="Cantrip">Cantrip</option>
+            </select>
+          </div>
+          <div>
+            <label className="block mb-2 font-medium">Sort By</label>
+            <select
+              value={filters.sort}
+              onChange={e => setFilters({ ...filters, sort: e.target.value })}
+              className="w-full p-2 border rounded"
+            >
+              <option value="Level">Level</option>
+              <option value="Name">Name</option>
+            </select>
+          </div>
+          <div>
+            <label className="block mb-2 font-medium">Action Count</label>
+            <select
+              value={filters.actions}
+              onChange={e => setFilters({ ...filters, actions: e.target.value })}
+              className="w-full p-2 border rounded"
+            >
+              <option value="Any">Any</option>
+              <option value="1">1 action</option>
+              <option value="2">2 actions</option>
+              <option value="3">3 actions</option>
+              <option value="1-3">1-3 actions</option>
+            </select>
+          </div>
+          <div className="flex justify-end gap-2 pt-4">
+            <button
+              onClick={() => {
+                setFilters({
+                  search: '',
+                  type: 'All',
+                  sort: 'Level',
+                  actions: 'Any'
+                });
+                setShowFilterModal(false);
+              }}
+              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+            >
+              Reset
+            </button>
+            <button
+              onClick={() => {
+                setShowFilterModal(false);
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Apply
+            </button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 
-  // show
-  document.getElementById('spell-modal').style.display='block';
-}
+  const SpellDetailModal = () => {
+    if (!selectedSpell) return null;
 
-/* close details modal */
-document.getElementById('close-modal').addEventListener('click',()=>{
-  document.getElementById('spell-modal').style.display='none';
-});
-window.addEventListener('click', e=>{
-  if(e.target===document.getElementById('spell-modal')){
-    document.getElementById('spell-modal').style.display='none';
-  }
-});
-</script>
-</body>
-</html>
+    const isFavorite = favoriteSpells.includes(selectedSpell.name);
+
+    const toggleFavorite = () => {
+      if (isFavorite) {
+        setFavoriteSpells(favoriteSpells.filter(name => name !== selectedSpell.name));
+      } else {
+        setFavoriteSpells([...favoriteSpells, selectedSpell.name]);
+      }
+    };
+
+    const formatDescription = (desc) => {
+      if (!desc) return '(No description)';
+      return desc
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/(Heightened\s*\(\+?\d+\)|Heightened\s*\(\d+(?:st|nd|rd|th)\))/gi, '<br>$1')
+        .replace(/\|(\d+)\|\s*/g, '<span class="action-circle">$1</span> ');
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle>{selectedSpell.name}</CardTitle>
+                <div className="text-sm text-gray-600 mt-1">
+                  {getSpellLevel(selectedSpell) > 0 ? `Spell Level ${getSpellLevel(selectedSpell)}` : 'Cantrip'}
+                </div>
+                <div className="text-sm text-gray-600">
+                  Traits: {(selectedSpell.traits || []).join(', ')}
+                </div>
+              </div>
+              <button onClick={() => setSelectedSpell(null)} className="text-gray-500 hover:text-gray-700">
+                <X size={24} />
+              </button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <div className="font-semibold mb-1">Cast</div>
+              <div>{selectedSpell.cast || '(No casting time specified)'}</div>
+            </div>
+            <div>
+              <div className="font-semibold mb-1">Range</div>
+              <div>{selectedSpell.range || '(No range specified)'}</div>
+            </div>
+            {selectedSpell.targets && (
+              <div>
+                <div className="font-semibold mb-1">Targets</div>
+                <div>{selectedSpell.targets}</div>
+              </div>
+            )}
+            {selectedSpell['saving throw'] && (
+              <div>
+                <div className="font-semibold mb-1">Saving Throw</div>
+                <div>{selectedSpell['saving throw']}</div>
+              </div>
+            )}
+            <div>
+              <div className="font-semibold mb-1">Description</div>
+              <div dangerouslySetInnerHTML={{ 
+                __html: formatDescription(selectedSpell.description) 
+              }} />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white shadow">
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
+          <h1 className="text-xl font-bold">Oracle Spell List</h1>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowFilterModal(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            >
+              <Filter size={18} />
+              Filter
+            </button>
+            <button
+              onClick={() => {
+                setFilters({
+                  search: '',
+                  type: 'All',
+                  sort: 'Level',
+                  actions: 'Any'
+                });
+              }}
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+            >
+              Clear Filter
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        {loading && (
+          <div className="flex justify-center items-center min-h-[200px]">
+            <div className="text-lg text-gray-600">Loading spells...</div>
+          </div>
+        )}
+        
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+            Error loading spells: {error}
+          </div>
+        )}
+
+        {!loading && !error && filteredSpells.length === 0 && (
+          <div className="text-center py-8 text-gray-600">
+            No spells found matching your criteria
+          </div>
+        )}
+
+        {!loading && !error && (
+          Object.entries(
+            filteredSpells.reduce((acc, spell) => {
+              const level = getSpellLevel(spell);
+              if (!acc[level]) acc[level] = [];
+              acc[level].push(spell);
+              return acc;
+            }, {})
+          )
+          .sort(([a], [b]) => Number(a) - Number(b))
+          .map(([level, spells]) => (
+            <SpellLevelGroup 
+              key={level} 
+              level={Number(level)} 
+              spells={spells} 
+            />
+          ))
+        )}
+      </main>
+
+      <FilterModal />
+      <SpellDetailModal />
+    </div>
+  );
+};
+
+export default SpellDatabase;
